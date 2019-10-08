@@ -1,27 +1,29 @@
 # react-webgame
-
+=============
 
 
 package.json, package-lock.json 추가하는 법
-npm init 를 작성
-package name: (현재 폴더명) "폴더명 지정(webpack_pratice)"
-version: (1.0.0) 
-description: "설명"
-entry point: (index.js)
-test command:
-git repository:
-keywords:
-author: KYLEE "저자 이름"
-license: (ISC) MIT 또는 ISC
+-------------
+1. npm init 를 작성
+2. package name: (현재 폴더명) "폴더명 지정(webpack_pratice)"
+3. version: (1.0.0) 
+4. description: "설명"
+5. entry point: (index.js)
+6. test command:
+7. git repository:
+8. keywords:
+9. author: KYLEE "저자 이름"
+10. license: (ISC) MIT 또는 ISC
+### package.json, package-lock.json 추가가 된다.
 
-package.json, package-lock.json 추가가 된다.
-
-------------------------------------------------------------
+<hr/>
 (dependencies, devDependencies 의 차이점)
 dependencies - 실제 서비스에서 쓰이는 것
 devDependencies - 개발에서만 쓰이는 것 ('-D'의미는 개발자용)
-------------------------------------------------------------
+<hr/>
+
 리액트 mpm추가
+-------------
 npm i react 
 npm i react-dom
 (npm i react react-dom 해도 상관없음)
@@ -29,9 +31,9 @@ npm i react-dom
 + react-dom@16.10.2
 package.json -> dependencies -> react, react-dom 추가되어 있다.
 
--------------------------------------------------------------
+<hr/>
 webpack 초기설정
-
+-------------
 npm i -D webpack
 npm i -D webpack-cli 
 (npm i -D webpack webpack-cli 해도 상관없음)
