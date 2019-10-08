@@ -5,14 +5,15 @@ package.json, package-lock.json 추가하는 법
 -------------
 
 <pre><code>1. npm init 를 작성
-2. package name: (현재 폴더명) "폴더명 지정         (webpack_pratice)"
+2. package name: (현재 폴더명) "폴더명 지정         
+   (webpack_pratice)"
 3. version: (1.0.0) 
 4. description: "설명"
 5. entry point: (index.js)
 6. test command:
 7. git repository:
 8. keywords:
-9. author: KYLEE "저자 이름"
+9.  author: KYLEE "저자 이름"
 10. license: (ISC) MIT 또는 ISC
 </code></pre>
 ### package.json, package-lock.json 추가가 된다.
@@ -24,6 +25,7 @@ dependencies - 실제 서비스에서 쓰이는 것
 
 devDependencies - 개발에서만 쓰이는 것 ('-D'의미는 개발자용)
 <hr/>
+
 리액트 mpm추가
 -------------
 
@@ -37,8 +39,10 @@ npm i react-dom
   
 package.json -> dependencies -> react, react-dom 추가되어 있다.
 <hr/>
+
 webpack 초기설정
 -------------
+
 <pre><code>npm i -D webpack
 npm i -D webpack-cli </code></pre>
 
@@ -67,12 +71,4 @@ npm i -dev @babel/preset-react -> 최신 문법을 옛날 문법으로 지원(�
 npm i -dev babel-loader -> 바벨이랑 웹팩을 연결함(많이 사용함)
 
 ## 이하 내용수정..
-
-
-
-
-
-
-
-
 
