@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 
 //  Webpack 설정
 module.exports = {
@@ -30,12 +31,29 @@ module.exports = {
             test: /\.jsx?$/,
             loader: 'babel-loader',
             options: {
-                presets: ['@babel/preset-env', '@babel/preset-react'],
+                presets: [
+                    ['@babel/preset-env', {
+                    // 브라우저 대응
+                    // 옛날 브라우저 지원, 제한, 호환 할 수도 있다.
+                        targets: {
+                            // 자신이 최신브라우저, 엤날 브라우저 조절할 수 있다.
+                            // 사이트 참조 : https://github.com/browserslist/browserslist
+                            browsers: ['last 2 chrome versions'],
+                        },
+                        // 옵션
+                        debug : true,
+                    }],
+                    '@babel/preset-react'
+                ],
+                // plugins들의 모음이 presets이다.
                 plugins: ['@babel/plugin-proposal-class-properties'],
             },
         }],
     },
-
+    // 확장 프로그램이라고 생각하면 된다.
+    plugins: [
+        new webpack.LoaderOptionsPlugins({ debeg : true})
+    ],
     output : {
         // c:\users\...\...\dist
         // 현재 폴더 위치에 dist라는 폴더를 만들어 준다.
