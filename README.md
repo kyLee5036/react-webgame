@@ -105,17 +105,39 @@ npm i -D webpack-dev-server</code></pre>
 
 package.json -> devDependencies -> react-hot-loader, webpack-dev-server 추가되어 있다.
 
+
 #### package.json 에서 설정
-<pre><code>"scripts": {
+```bash
+"scripts": {
     "dev": "webpack-dev-server --hot"
-}, </code></pre>
+}, 
+```
+#### client.jsx에서 설정
+```javascript
+const { hot } = require('react-hot-loader'); 
+const WordRelay = require('./WordRelay');
+const Hot = hot(WordRelay);
+Reactdom.render(<Hot />, document.querySelector('#root'));
+```
+#### webpack.config.js에서 설정
+```bash
+"plugins": [
+    'react-hot-loader/babel' 
+],
+```
+#### index.html에서 설정 (dist폴더를 삭제해준다.)
+```html
+<script src="./app.js"></script>
+```
+
 
 ## 이하 내용수정중..
 
 ### error 처리
-커맨드가 안 될경우에는 : npm i -g webpack-dev-server 
++ 커맨드가 안 될경우에는 : npm i -g webpack-dev-server
++ Error: Cannot find module 'webpack' : npm link webpack
 
-Error: Cannot find module 'webpack' : npm link webpack
+
 
 
 
