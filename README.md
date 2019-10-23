@@ -28,7 +28,7 @@ devDependencies - 개발에서만 쓰이는 것 ('-D'의미는 개발자용)
 <br /><br /><br />
 <hr/>
 
-리액트 mpm추가
+리액트 npm추가
 -------------
 
 <pre><code>npm i react
