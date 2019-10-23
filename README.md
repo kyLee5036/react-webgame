@@ -109,7 +109,12 @@ package.json -> devDependencies -> react-hot-loader, webpack-dev-server 추가�
 <pre><code>"scripts": {
     "dev": "webpack-dev-server --hot"
 }, </code></pre>
-커맨드가 안 될경우에는 : npm i -g webpack-dev-server 
 
 ## 이하 내용수정중..
+
+### error 처리
+커맨드가 안 될경우에는 : npm i -g webpack-dev-server 
+Error: Cannot find module 'webpack' : npm link webpack
+
+
 
