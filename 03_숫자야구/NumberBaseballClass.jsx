@@ -3,11 +3,11 @@ import ReactDOM from 'react-dom';
 
 class NumberBaseballClass extends Component {
     state = {
-        text:'Hello webpack!!!23223233',
+        text:'Hello webpa!!!23233',
     }
 
     render() {
-        return <h1>{this.state.text}</h1>
+        return <h3>{this.state.text}</h3>
     }
 }
 
