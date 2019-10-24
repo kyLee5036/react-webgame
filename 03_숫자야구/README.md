@@ -1,4 +1,5 @@
 ## 리액트 반복문 <br>( 다른 반복문과 달리 <strong>Map</strong>을 사용한다)
+<hr><hr>
 
 ### - 리액트 반복문 - ( Map-기본형 ) <br> ( Key가 없어 에러가 나온다. )
 ```javascript
@@ -8,6 +9,9 @@
 })}
 </ul>
 ```
+
+<hr>
+
 
 ### - 리액트 반복문 - ( Key-응용형 ) <br> ( Key가 있어 에러가 나오지 않는다. ) <br> 리액트에 있어서 Map을 사용할 경우에는 반드시 Key값을 넣어줘야한다. 
 
@@ -123,6 +127,104 @@ return (
 
 ```
 
+<hr>
+
+### - 컴포넌트 분리와 props (분리함으로써 코드관리를 효율적으로 할 수 있다.)
+초보상태에서의 프로그램 작성 방법은 <Strong>TOP&BOTTOM</Strong> 방식으로 한다.<br>
+숙련이 된 상태에서의 프로그램 작성 방법은 <Strong>BOTTOM&TOP</Strong> 방식으로 한다.
+
+
+Try.jsx를 추가한다.
+
+Try.jsx
+```javascript
+import React, { Component } from 'react';
+
+class Try extends Component {
+    render() {
+        return (
+            <li key={value.fruit + value.taste}>
+                <b>{value.fruit}</b> - {value.taste}
+            </li>
+        )
+    }
+}
+
+export default Try;
+
+```
+
+NumberBaseballClass.jsx
+```javascript
+
+//...이하생략
+import Try from './Try' // 추가
+
+class NumberBaseballClass extends Component {
+   state = {
+       //...이하생략
+   }
+   fruits = [ // 변경
+        { fruit:'사과', taste:'맛있다' },
+        { fruit:'바나나', taste:'맛있다' },
+        { fruit:'포도', taste:'시다' },
+        { fruit:'귤', taste:'시다' },
+        { fruit:'감', taste:'떫다' },
+        { fruit:'배', taste:'달다' },
+    ]
+
+    render() {
+        return (
+        <>
+            //...이하생략
+            <ul>{this.fruits.map((value, index) => {  // 변경
+                    return ( 
+                        <Try />
+                    );
+                })}
+            </ul>
+        </>
+        )
+    }
+}
+
+export default NumberBaseballClass;
+```
+
+NumberBaseballClass.jsx <br>(value,index는 자기 맘대로 해도된다 (예시 확인하면 된다.))
+<br>key는 index는 안하는 편이 좋다 (성능 최적화를 위해서!)
+```javascript
+return ( 
+    // 예시 1
+    <Try key={value.fruit + value.taste} getValue={value} getIndex={index} />
+
+    // 예시 2
+    // <Try va={value} ind={index} />
+);
+
+
+```
+
+Try.jsx <br>(value,index는 자기 맘대로 해도된다 (예시 확인하면 된다.))
+
+```javascript
+ <li>
+
+    // 예시 1
+    <b>{this.props.getValue.fruit}</b> -
+    {this.props.getValue.taste} - 
+    {this.props.getIndex}
+
+    // 예시 2
+    // <b>{this.props.va.fruit}</b> -
+    // {this.props.va.taste} - 
+    // {this.props.ind}
+</li>
+```
+리액트에는 컴포넌트 분리하기 위해서는 <strong>props</strong>를 자식에게 상속해줘야한다.
+<strong>props</strong>가 생기면서 부모-자식관계가 생긴다. NumberBaseballClass가 부모가 되고, Try가 자식이 된다. 
+
+<hr>
 
 ```javascript
 
@@ -130,6 +232,11 @@ return (
 
 ```
 
+```javascript
+
+
+
+```
 
 ```javascript
 
@@ -137,13 +244,17 @@ return (
 
 ```
 
-
 ```javascript
 
 
 
 ```
 
+```javascript
+
+
+
+```
 
 ```javascript
 
