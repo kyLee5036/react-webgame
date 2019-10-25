@@ -226,6 +226,36 @@ Try.jsx <br>(value,index는 자기 맘대로 해도된다 (예시 확인하면 �
 
 <hr>
 
+### 리액트에서 push를 사용하지 않는다.
+#### 새로운 배열을 만들어주고 기존의 배열을 복사해 놓고 넣어 준다.
+
+예전꺼랑 바뀐게 없어서 렌더를 하지 않는다.
+```javascript
+const Array = [];
+Array.push(1);
+Array === Array // true
+```
+
+이전 배열을 복사해서 넣고 싶은 곳에 넣어둔다. 리액트가 바뀐것을 알아차릴 수 있도록하면 렌더를 한다.
+```javascript
+const Array = [];
+const Copy_Array = [...Array, 2];
+Array === Copy_Array // false
+
+```
+
+이전 것을 복사하고 새로운 것을 넣어준다.
+```javascript
+this.setState({
+    result:'HOMERUN!!!',
+    tries: [...this.state.tries, {try: this.state.value, result:'HOMERUN!!!'}],
+    // tries: this.state.tries.push(); !!불가능!!
+});
+```
+
+
+
+
 ```javascript
 
 
