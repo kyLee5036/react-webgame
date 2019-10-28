@@ -1,7 +1,8 @@
-## 리액트 반복문 <br>( 다른 반복문과 달리 <strong>Map</strong>을 사용한다)
+# 리액트 반복문 / 렌더링 <br>( 다른 반복문과 달리 <strong>Map</strong>을 사용한다)
+
 <hr><hr>
 
-### - 리액트 반복문 - ( Map-기본형 ) <br> ( Key가 없어 에러가 나온다. )
+## - 리액트 반복문 - ( Map-기본형 ) <br> ( Key가 없어 에러가 나온다. )
 ```javascript
 <ul>
 {['apple', 'grape', 'orange', 'banana'].map((v, i) => {
@@ -13,7 +14,7 @@
 <hr>
 
 
-### - 리액트 반복문 - ( Key-응용형 ) <br> ( Key가 있어 에러가 나오지 않는다. ) <br> 리액트에 있어서 Map을 사용할 경우에는 반드시 Key값을 넣어줘야한다. 
+## - 리액트 반복문 - ( Key-응용형 ) <br> ( Key가 있어 에러가 나오지 않는다. ) <br> 리액트에 있어서 Map을 사용할 경우에는 반드시 Key값을 넣어줘야한다. 
 
 기본적인 배열선언 방법이다.
 ```javascript
@@ -129,7 +130,7 @@ return (
 
 <hr>
 
-### - 컴포넌트 분리와 props (분리함으로써 코드관리를 효율적으로 할 수 있다.)
+## - 컴포넌트 분리와 props <br>(분리함으로써 코드관리를 효율적으로 할 수 있다.)
 초보상태에서의 프로그램 작성 방법은 <Strong>TOP&BOTTOM</Strong> 방식으로 한다.<br>
 숙련이 된 상태에서의 프로그램 작성 방법은 <Strong>BOTTOM&TOP</Strong> 방식으로 한다.
 
@@ -226,7 +227,7 @@ Try.jsx <br>(value,index는 자기 맘대로 해도된다 (예시 확인하면 �
 
 <hr>
 
-### 리액트에서 push를 사용하지 않는다.
+## 리액트에서 push를 사용하지 않는다.
 #### 새로운 배열을 만들어주고 기존의 배열을 복사해 놓고 넣어 준다.
 
 예전꺼랑 바뀐게 없어서 렌더를 하지 않는다.
@@ -252,8 +253,72 @@ this.setState({
     // tries: this.state.tries.push(); !!불가능!!
 });
 ```
+<hr><hr>
+
+## 렌더링 문제해결
+렌더링의 문제 -> 나중에 성능으로서의 문제된다.
+성능최적화를 위해서 사용해준다.
+
+### 1. shouldComponentUpdate
+
+```javascript
+import React, { Component } from 'react';
+class renderTest extends Component {
+    state = {
+        counter: 0,
+    };
+    // 리액트에 지원해주는 메소드 (렌더링)
+    shouldComponentUpdate(nextProps, nextState, nextContext) {
+        // 직접 렌더링을 해줘야한다 
+        // 과거 데이터랑 미래 바뀌는 데이터가 다르면 렌더링을 해주고 같으면 안 해준다.
+        if (this.state.counter !== nextState.counter) {
+            return true;
+        } 
+        return false;
+    }
+    onClick = () => {
+        this.setState({});
+    }
+
+    render() {
+        console.log('렌더링', this.state);
+        return (
+            <div>
+                <button onClick={this.onClick}>click</button>
+            </div>
+        )
+    }
+}
+export default renderTest;
+```
+<hr>
+
+### 2. PureComponent와 React.memo
+
+```javascript
 
 
+
+```
+<hr>
+
+### 3. React.createRef
+
+```javascript
+
+
+
+```
+<hr>
+
+### 4. props와 state 연결
+
+```javascript
+
+
+
+```
+<hr>
 
 
 ```javascript
@@ -261,6 +326,8 @@ this.setState({
 
 
 ```
+
+<hr>
 
 ```javascript
 
