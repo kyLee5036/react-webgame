@@ -398,16 +398,182 @@ const Try = memo (( {tryInfo}) => {
 
 ### 3. React.createRef
 
+React.createRef는 class에서 쓴다. <br>
+근데 Hooks이랑 class랑 비슷해서 헷갈리는 경우가 있는데 createRef를 하면 행태가 조금이라도 비슷해진다.<br>
+class에서 createRef를 사용하지 않는다면 함수를 만들어서 좀 더 세밀하게 지정할 수 있다.<br>
+사용한다면 세밀하지가 않지만 간단하게 사용할 수 있게된다. <br>
+결국에는 실우에 따라 사용할건지 결정이 된다.
+
+
+#### NumberBaseballClass.jsx (전체 소스)
+```javascript
+import React, {Component, createRef} from 'react';
+import ReactDOM from 'react-dom';
+import Try from './Try'
+
+const getNumbers = () => { // 숫자 네 개를 겹치지 않고 랜덤하게 뽑는 함수
+    const candidate = [1,2,3,4,5,6,7,8,9];
+    const array = [];
+    for (let i = 0; i < 4; i += 1) {
+      const chosen = candidate.splice(Math.floor(Math.random() * (9 - i)), 1)[0];
+      array.push(chosen);
+    }
+    return array;
+  }
+  
+
+class NumberBaseballClass extends Component {
+    state = {
+       result: '',
+       value: '',
+       answer: getNumbers(),
+       // 배열을 복사하기 위해서 배열선언 함
+        tries : [], 
+        
+   }
+     
+    onSubmitForm = (event) => {
+        const {result, value, tries, answer} = this.state;
+        event.preventDefault();
+        if ( value === answer.join('')) {
+            this.setState({
+                result:'HOMERUN!!!',
+                tries: [...tries, {try: value, result:'HOMERUN!!!'}],
+            });
+            alert('HOMERUN');
+            this.setState({
+                value: '',
+                answer: getNumbers(),
+                tries: [],
+            });
+        } else {
+            const answerArray = value.split('').map( (v) => parseInt(v) );
+            let strike = 0;
+            let ball = 0;
+            if (tries.length >= 9 ) {
+                this.setState({
+                    result: `More than 10 : ${answer.join(',')}`,
+                });
+                alert('Game restart');
+                this.setState({
+                    value: '',
+                    answer: getNumbers(),
+                    tries: [],
+                });
+                // this.inputRef.focus();
+                this.inputRef.current.focus();
+            } else {
+                for ( let i = 0; i< 4; i+=1) {
+                    if (answerArray[i] === answer[i]) {
+                        strike += 1;
+                    } else if (answer.includes(answerArray[i])) {
+                        ball+=1;
+                    }
+                }
+                this.setState({
+                    tries: [...tries, {try: value, result:`strike : ${strike}, ball : ${ball}`}],
+                    value : '',
+                });
+                // this.inputRef.focus();
+                this.inputRef.current.focus();
+            }
+        }
+    };
+
+    onChangeInput = (event) => {
+        console.log(this.state.answer);
+        this.setState({
+            value: event.target.value,
+        });
+    };
+
+    // inputRef;
+    // onInputRef = (c) => {this.inputRef = c;}
+
+    inputRef = createRef(); // this.inputRef
+
+    render() {
+        const {result, value, tries} = this.state;
+        return (
+        <>
+            <h1>{result}</h1>
+            <form onSubmit={this.onSubmitForm}>
+                {/* <input 
+                ref = {this.onInputRef}
+                maxLength={4} 
+                value={value} 
+                onChange={this.onChangeInput}/> */}
+                <input 
+                ref = {this.inputRef}
+                maxLength={4} 
+                value={value} 
+                onChange={this.onChangeInput}/>
+            </form>
+            <div>시도 : {tries.length}</div>
+            <ul>{tries.map((value, index) => {  // 변경
+                    return ( 
+                        <Try key={`${index + 1} trying`} tryInfo={value} />
+                    );
+                })}
+            </ul>
+        </>
+        )
+    }
+}
+
+
+export default NumberBaseballClass;
+
+```
+
+#### NumberBaseballClass.jsx (before)
+선언을 이런식으로 해주었다.
+```javascript
+
+this.inputRef.focus();
+
+inputRef;
+onInputRef = (c) => {this.inputRef = c;}
+
+this.inputRef.current.focus();
+
+<input 
+    ref = {this.onInputRef}
+    maxLength={4} 
+    value={value} 
+    onChange={this.onChangeInput}/>
+```
+<hr>
+
+#### NumberBaseballClass.jsx (after)<br>Hooks랑 형태가 비슷하다.
+```javascript
+import React, {Component, createRef} from 'react';
+
+inputRef = createRef(); // this.inputRef
+
+<input 
+    ref = {this.inputRef}
+    maxLength={4} 
+    value={value} 
+    onChange={this.onChangeInput}/>
+
+```
+#### NumberBaseballHooks.jsx <br>after이랑 형태가 비슷하다.
+
+```javascript
+import React, { useRef, useState } from 'react';
 
 const inputEl = useRef(null);
 
+inputEl.current.focus();
 
-```javascript
-
-
+<input
+    ref={inputEl}
+    maxLength={4}
+    value={value}
+    onChange={(e) => setValue(e.target.value)}/>
 
 ```
-<hr>
 
 ### 4. props와 state 연결
 
@@ -427,11 +593,6 @@ const inputEl = useRef(null);
 
 <hr>
 
-```javascript
-
-
-
-```
 
 ```javascript
 

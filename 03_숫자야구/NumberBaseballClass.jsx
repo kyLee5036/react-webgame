@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import ReactDOM from 'react-dom';
 import Try from './Try'
 
@@ -51,6 +51,8 @@ class NumberBaseballClass extends Component {
                     answer: getNumbers(),
                     tries: [],
                 });
+                // this.inputRef.focus();
+                this.inputRef.current.focus();
             } else {
                 for ( let i = 0; i< 4; i+=1) {
                     if (answerArray[i] === answer[i]) {
@@ -63,6 +65,8 @@ class NumberBaseballClass extends Component {
                     tries: [...tries, {try: value, result:`strike : ${strike}, ball : ${ball}`}],
                     value : '',
                 });
+                // this.inputRef.focus();
+                this.inputRef.current.focus();
             }
         }
     };
@@ -74,6 +78,10 @@ class NumberBaseballClass extends Component {
         });
     };
 
+    // inputRef;
+    // onInputRef = (c) => {this.inputRef = c;}
+
+    inputRef = createRef(); // this.inputRef
 
     render() {
         const {result, value, tries} = this.state;
@@ -81,7 +89,16 @@ class NumberBaseballClass extends Component {
         <>
             <h1>{result}</h1>
             <form onSubmit={this.onSubmitForm}>
-                <input maxLength={4} value={value} onChange={this.onChangeInput}/>
+                {/* <input 
+                ref = {this.onInputRef}
+                maxLength={4} 
+                value={value} 
+                onChange={this.onChangeInput}/> */}
+                <input 
+                ref = {this.inputRef}
+                maxLength={4} 
+                value={value} 
+                onChange={this.onChangeInput}/>
             </form>
             <div>시도 : {tries.length}</div>
             <ul>{tries.map((value, index) => {  // 변경
@@ -97,5 +114,8 @@ class NumberBaseballClass extends Component {
 
 
 export default NumberBaseballClass;
+
+
+
 
 
