@@ -3,9 +3,12 @@ import ReactDOM from 'react-dom';
 
 import {hot} from 'react-hot-loader/root'
 
-import NumberBaseballClass from './NumberBaseballClass';
+import MapPratice from './NumberBaseballClass';
 
-const Hot = hot(NumberBaseballClass);
+import Test from './ShouldComponetUpdate_renderTest';
+import Test2 from './PureComponent_renderTest';
 
-ReactDOM.render(<NumberBaseballClass />, document.querySelector('#root'));
+const Hot = hot(MapPratice);
+
+ReactDOM.render(<MapPratice />, document.querySelector('#root'));
 

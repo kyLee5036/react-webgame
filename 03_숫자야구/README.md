@@ -137,7 +137,7 @@ return (
 
 Try.jsx를 추가한다.
 
-Try.jsx
+#### - Try.jsx
 ```javascript
 import React, { Component } from 'react';
 
@@ -155,7 +155,7 @@ export default Try;
 
 ```
 
-NumberBaseballClass.jsx
+#### - NumberBaseballClass.jsx
 ```javascript
 
 //...이하생략
@@ -192,7 +192,7 @@ class NumberBaseballClass extends Component {
 export default NumberBaseballClass;
 ```
 
-NumberBaseballClass.jsx <br>(value,index는 자기 맘대로 해도된다 (예시 확인하면 된다.))
+#### - NumberBaseballClass.jsx <br>(value,index는 자기 맘대로 해도된다 (예시 확인하면 된다.))
 <br>key는 index는 안하는 편이 좋다 (성능 최적화를 위해서!)
 ```javascript
 return ( 
@@ -202,11 +202,11 @@ return (
     // 예시 2
     // <Try va={value} ind={index} />
 );
-
-
 ```
 
-Try.jsx <br>(value,index는 자기 맘대로 해도된다 (예시 확인하면 된다.))
+
+#### - Try.jsx <br>(value,index는 자기 맘대로 해도된다 (예시 확인하면 된다.))
+
 
 ```javascript
  <li>
@@ -221,7 +221,9 @@ Try.jsx <br>(value,index는 자기 맘대로 해도된다 (예시 확인하면 �
     // {this.props.va.taste} - 
     // {this.props.ind}
 </li>
+
 ```
+
 리액트에는 컴포넌트 분리하기 위해서는 <strong>props</strong>를 자식에게 상속해줘야한다.
 <strong>props</strong>가 생기면서 부모-자식관계가 생긴다. NumberBaseballClass가 부모가 되고, Try가 자식이 된다. 
 
@@ -261,6 +263,7 @@ this.setState({
 
 ### 1. shouldComponentUpdate
 
+#### - shouldComponentUpdate_renderTest.jsx
 ```javascript
 import React, { Component } from 'react';
 class renderTest extends Component {
@@ -270,14 +273,16 @@ class renderTest extends Component {
     // 리액트에 지원해주는 메소드 (렌더링)
     shouldComponentUpdate(nextProps, nextState, nextContext) {
         // 직접 렌더링을 해줘야한다 
-        // 과거 데이터랑 미래 바뀌는 데이터가 다르면 렌더링을 해주고 같으면 안 해준다.
+        // 해석 : 이전 데이터랑 현재 바뀌는 데이터가 다르면 렌더링을 해주고 같으면 안 해준다.
         if (this.state.counter !== nextState.counter) {
             return true;
         } 
         return false;
     }
     onClick = () => {
-        this.setState({});
+        this.setState({
+            // 코드
+        });
     }
 
     render() {
@@ -295,14 +300,107 @@ export default renderTest;
 
 ### 2. PureComponent와 React.memo
 
-```javascript
+<strong>Class 경우 : PureComponent<br>Hooks 경우 : React.memo</strong><br>
+훅스에는 PureComponet가 없다. 그래서 Memo가 있다.
 
+#### class인 경우 -> PureComponent선언 -> 클라스 옆 extends에 PureComponent 적어준다.
+
+#### - Try_PureComponent_memo.jsx
+```javascript
+import React, { PureComponent } from 'react';
+class Try extends PureComponent {
+    render() {
+        const { tryInfo } = this.props;
+        return (
+            <li>
+                <div>{tryInfo.try}</div>
+                <div>{tryInfo.result}</div>
+            </li>
+        );
+    }
+}
 
 
 ```
+
+shouldComponentUpdate방법이 복잡하면 PureComponent하면된다.<br>
+단점 : 객체나 배열, 복잡한 구조가 나오면 참조관계구조 PureComponent하기가 어렵다.<br>
+<strong>PureComponent할 때 옛날 객체를 가져오지말고, 새로운 객체나 배열을 만들어라!!</strong><br>
+Component가 많아지면 PureComponent가 안되는 경우가 있다. 그리고 Component사용하는 경우가 있다. 자신이 원하는 렌더링만 PureComponent해주면 된다.
+<br>
+
+#### 배열사용할 때 렌더링하는 법
+
+#### - PureComponent_renderTest.jsx
+```javascript
+import React, { PureComponent } from 'react';
+
+class renderTest extends PureComponent {
+   state = {
+        counter: 0,
+        string: 'hello',
+        number: 1,
+        boolean: true,
+        object: [],
+        array: [],
+    };
+
+    onClick = () => {
+        
+        // 현재 array랑 이전 array true가 나와서 렌더링이 !!!안된다.!!!
+        const array = this.state.array;
+        array.push(1);
+        this.setState({
+            array: array,
+        });
+
+        // 현재 array랑 이전 array false 나와서 렌더링이 된다.
+        // 즉, 새로운 배열을 만들어줘야한다. 
+        this.setState({
+            array: [...this.state.array, 1],
+        });
+
+    }
+    render() {
+        console.log('렌더링', this.state);
+        return (
+            <div>
+                <button onClick={this.onClick}>click</button>
+            </div>
+        )
+    }
+}
+export default renderTest;
+```
+
+
+
+#### hooks인 경우 -> memo선언 -> memo가 함수를 감싸준다. 
+
+#### - Try_PureComponent_memo.jsx
+
+```javascript
+import React, { memo } from 'react';
+const Try = memo (( {tryInfo}) => {
+   
+    return (
+        <li>
+            <div>{tryInfo.try}</div>
+            <div>{tryInfo.result}</div>
+        </li>
+    );   
+});
+
+
+```
+
 <hr>
 
 ### 3. React.createRef
+
+
+const inputEl = useRef(null);
+
 
 ```javascript
 
