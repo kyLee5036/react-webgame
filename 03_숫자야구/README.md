@@ -7,7 +7,7 @@
 - [렌더링 문제해결](#렌더링-문제해결)<br>
 - [PureComponent와 React.memo](#PureComponent와-React.memo)<br>
 - [배열사용할 때 렌더링하는 법](#배열사용할-때-렌더링하는-법)<br>
-- [React.createRef](#React.createRef)<br>
+- [React.createRef](#<!--ReactcreateRef-->)<br>
 
 <hr><hr>
 
@@ -409,7 +409,7 @@ const Try = memo (( {tryInfo}) => {
 <hr>
 
 ### React.createRef
-
+<!--ReactcreateRef-->
 React.createRef는 class에서 쓴다. <br>
 근데 Hooks이랑 class랑 비슷해서 헷갈리는 경우가 있는데 createRef를 하면 행태가 조금이라도 비슷해진다.<br>
 class에서 createRef를 사용하지 않는다면 함수를 만들어서 좀 더 세밀하게 지정할 수 있다.<br>
