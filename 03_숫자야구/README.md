@@ -1,19 +1,18 @@
 # 리액트 반복문 / 렌더링 <br>( 다른 반복문과 달리 <strong>Map</strong>을 사용한다)
 
-[리액트 반복문 - ( Map-기본형 )](#의미는-개발자용)
-
-[리액트 반복문1 - ( Map-기본형 )](#리액트-반복문1)<br>
-[리액트 반복문2 - ( Key-응용형 )](#리액트-반복문2)<br>
-[컴포넌트 분리와 props](#컴포넌트-분리와-props)<br>
-[리액트에서 push를 사용하지 않는다.](#리액트에서-push를-사용하지-않는다.)<br>
-[렌더링 문제해결](#렌더링-문제해결)<br>
-[PureComponent와 React.memo](#PureComponent와-React.memo)<br>
-[배열사용할 때 렌더링하는 법](#배열사용할-때-렌더링하는-법)<br>
-[React.createRef](#React.createRef)<br>
+- [리액트 반복문1 - ( Map-기본형 )](#리액트-반복문1)<br>
+- [리액트 반복문2 - ( Key-응용형 )](#리액트-반복문2)<br>
+- [컴포넌트 분리와 props](#컴포넌트-분리와-props)<br>
+- [리액트에서 push를 사용하지 않는다.](#리액트에서-push를-사용하지-않는다.)<br>
+- [렌더링 문제해결](#렌더링-문제해결)<br>
+- [PureComponent와 React.memo](#PureComponent와-React.memo)<br>
+- [배열사용할 때 렌더링하는 법](#배열사용할-때-렌더링하는-법)<br>
+- [React.createRef](#React.createRef)<br>
 
 <hr><hr>
 
-## - 리액트 반복문1 - ( Map-기본형 ) <br> ( Key가 없어 에러가 나온다. )
+## 리액트 반복문1 
+( Map-기본형 ) <br> <strong>( Key가 없어 에러가 나온다. )</strong>
 ```javascript
 <ul>
 {['apple', 'grape', 'orange', 'banana'].map((v, i) => {
@@ -25,7 +24,8 @@
 <hr>
 
 
-## - 리액트 반복문2 - ( Key-응용형 ) <br> ( Key가 있어 에러가 나오지 않는다. ) <br> 리액트에 있어서 Map을 사용할 경우에는 반드시 Key값을 넣어줘야한다. 
+## 리액트 반복문2 
+( Key-응용형 ) <br> <strong>( Key가 있어 에러가 나오지 않는다. )</strong> <br> 리액트에 있어서 Map을 사용할 경우에는 반드시 Key값을 넣어줘야한다. 
 
 기본적인 배열선언 방법이다.
 ```javascript
@@ -141,7 +141,8 @@ return (
 
 <hr>
 
-## - 컴포넌트 분리와 props <br>(분리함으로써 코드관리를 효율적으로 할 수 있다.)
+## 컴포넌트 분리와 props
+<strong>(분리함으로써 코드관리를 효율적으로 할 수 있다.)</strong><br>
 초보상태에서의 프로그램 작성 방법은 <Strong>TOP&BOTTOM</Strong> 방식으로 한다.<br>
 숙련이 된 상태에서의 프로그램 작성 방법은 <Strong>BOTTOM&TOP</Strong> 방식으로 한다.
 
@@ -309,7 +310,7 @@ export default renderTest;
 ```
 <hr>
 
-### 2. PureComponent와 React.memo
+### PureComponent와 React.memo
 
 <strong>Class 경우 : PureComponent<br>Hooks 경우 : React.memo</strong><br>
 훅스에는 PureComponet가 없다. 그래서 Memo가 있다.
@@ -407,7 +408,7 @@ const Try = memo (( {tryInfo}) => {
 
 <hr>
 
-### 3. React.createRef
+### React.createRef
 
 React.createRef는 class에서 쓴다. <br>
 근데 Hooks이랑 class랑 비슷해서 헷갈리는 경우가 있는데 createRef를 하면 행태가 조금이라도 비슷해진다.<br>
@@ -585,5 +586,4 @@ inputEl.current.focus();
     onChange={(e) => setValue(e.target.value)}/>
 
 ```
-
 
