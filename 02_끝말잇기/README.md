@@ -106,11 +106,12 @@ value, onChange는 세트로 같이 써줘야한다.<br>둘 중 하나라도 없
 ```javascript
 <input ref={this.onRefInput} value={this.state.value} onChange={this.onChangeInput} />
 ```
-
+* * *
+* * *
 
 ## Hooks인 경우
 #### wordRelayClass.jsx (전체 소스)
-<strong>useRef</strong> Hook 은 함수형 컴포넌트에서 ref 를 쉽게 사용 할 수 있게 해준다. 
+<strong>useRef</strong> : Hook 은 함수형 컴포넌트에서 ref 를 쉽게 사용 할 수 있게 해준다. 
 
 ```javascript
 import React, { useState, useRef } from './react';
