@@ -3,11 +3,11 @@
 - [리액트 반복문1 - ( Map-기본형 )](#리액트-반복문1)<br>
 - [리액트 반복문2 - ( Key-응용형 )](#리액트-반복문2)<br>
 - [컴포넌트 분리와 props](#컴포넌트-분리와-props)<br>
-- [리액트에서 push를 사용하지 않는다.](#리액트에서-push를-사용하지-않는다.)<br>
+- [리액트에서 push를 사용하지 않는다.](#리액트에서-push를-사용하지-않는다)<br>
 - [렌더링 문제해결](#렌더링-문제해결)<br>
-- [PureComponent와 React.memo](#PureComponent와-React.memo)<br>
+- [PureComponent와 React.memo](#PureComponent와-Reactmemo)<br>
 - [배열사용할 때 렌더링하는 법](#배열사용할-때-렌더링하는-법)<br>
-- [React.createRef](#<!--ReactcreateRef-->)<br>
+- [React.createRef](#ReactCreateRef)<br>
 
 <hr><hr>
 
@@ -241,7 +241,7 @@ return (
 
 <hr>
 
-## 리액트에서 push를 사용하지 않는다.
+## 리액트에서 push를 사용하지 않는다
 #### 새로운 배열을 만들어주고 기존의 배열을 복사해 놓고 넣어 준다.
 
 예전꺼랑 바뀐게 없어서 렌더를 하지 않는다.
@@ -311,7 +311,9 @@ export default renderTest;
 <hr>
 
 ### PureComponent와 React.memo
-
+PureComponent와 Reactmemo
+<br>
+<br>
 <strong>Class 경우 : PureComponent<br>Hooks 경우 : React.memo</strong><br>
 훅스에는 PureComponet가 없다. 그래서 Memo가 있다.
 
@@ -408,8 +410,9 @@ const Try = memo (( {tryInfo}) => {
 
 <hr>
 
-### React.createRef
-<!--ReactcreateRef-->
+### React.CreateRef
+ReactCreateRef
+<br>
 React.createRef는 class에서 쓴다. <br>
 근데 Hooks이랑 class랑 비슷해서 헷갈리는 경우가 있는데 createRef를 하면 행태가 조금이라도 비슷해진다.<br>
 class에서 createRef를 사용하지 않는다면 함수를 만들어서 좀 더 세밀하게 지정할 수 있다.<br>
