@@ -22,7 +22,7 @@ package.json, package-lock.json 추가하는 법
 
 ## (dependencies, devDependencies 의 차이점)
 
-dependencies - 실제 서비스에서 쓰이는 것
+dependencies - 실제 서비스에서 쓰이는 것 
 
 devDependencies - 개발에서만 쓰이는 것 ('-D'의미는 개발자용)
 <br /><br /><br />
