@@ -114,7 +114,7 @@ package.json -> devDependencies -> react-hot-loader, webpack-dev-server 추가�
 ```
 #### client.jsx에서 설정
 ```javascript
-const { hot } = require('react-hot-loader'); 
+const { hot } = require('react-hot-loader/root'); 
 const WordRelay = require('./WordRelay');
 const Hot = hot(WordRelay);
 Reactdom.render(<Hot />, document.querySelector('#root'));
