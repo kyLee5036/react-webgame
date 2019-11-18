@@ -267,6 +267,19 @@ this.setState({
     // tries: this.state.tries.push(); !!불가능!!
 });
 ```
+
+위와 동일하다. 하지만 간결하게 나타냈음.
+```javascript
+this.setState((prevState) => {
+    return {
+        result : 'HOMERUN!!!',
+        tries: [...prevState.tries, { try : prevState.value, result : 'HOMERUN!!!'}],    
+    }
+}),
+
+```
+
+
 <hr><hr>
 
 ## 렌더링 문제해결
@@ -589,4 +602,3 @@ inputEl.current.focus();
     onChange={(e) => setValue(e.target.value)}/>
 
 ```
-
