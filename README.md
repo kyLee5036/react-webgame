@@ -13,7 +13,7 @@ package.json, package-lock.json 추가하는 법
 6. test command:
 7. git repository:
 8. keywords:
-9.  author: KYLEE "저자 이름"
+9. author: KYLEE "저자 이름"
 10. license: (ISC) MIT 또는 ISC
 </code></pre>
 ### package.json, package-lock.json 추가가 된다.
