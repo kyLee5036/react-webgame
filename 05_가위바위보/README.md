@@ -3,7 +3,7 @@
 + [리액트 라이프사이클 소개](#리액트-라이프사이클-소개)
 + [setInterval과 라이프사이클 연동하기](#setInterval과-라이프사이클-연동하기)
 + [가위바위보 게임 만들기](#가위바위보-게임-만들기)
-+ 고차 함수와 Q&amp;A
++ [고차 함수와 Q&amp;A](#고차-함수와-Q&amp;A)
 + Hooks와 useEffect
 + 클래스와 Hooks 라이프사이클 비교
 
@@ -134,4 +134,77 @@ componentDidMount() {
 ## 가위바위보 게임 만들기
 
 #### RSPClass.jsx 참조
+
+
+## 고차 함수와 Q&amp;A
+
+메서드에 함수를 호출하는 부분 
+
+바꾸기 <strong>전</strong> 모습
+
+```javascript
+<button id="rock" className="btn" onClick={() => this.onClickBtn('바위')}>바위</button>
+<button id="scissor" className="btn" onClick={() => this.onClickBtn('가위')}>가위</button>
+<button id="paper" className="btn" onClick={() => this.onClickBtn('보')}>보</button>
+```
+
+```javascript
+onClickBtn = (choice) => {
+    const {imgCoord} = this.state;
+    clearInterval(this.interval);
+    ...내용생략
+};
+
+```
+
+바꾸고 난 <strong>후</strong>에 모습 : ()을 삭제한다.
+```javascript
+<button id="rock" className="btn" onClick={this.onClickBtn('바위')}>바위</button>
+<button id="scissor" className="btn" onClick={this.onClickBtn('가위')}>가위</button>
+<button id="paper" className="btn" onClick={this.onClickBtn('보')}>보</button>
+```
+
+```javascript
+onClickBtn = (choice) => () => {
+    const {imgCoord} = this.state;
+    clearInterval(this.interval);
+    ...내용생략
+};
+
+```
+() => 를 한개 더 추가를 해줘야한다.
+
+
+
+<strong>매개변수</strong>가 있을 경우에는 (바꾸기 <strong>전</strong>에 모습)
+```javascript
+<button id="rock" className="btn" onClick={(매개변수) => this.onClickBtn('바위')}>바위</button>
+```
+
+
+```javascript
+onClickBtn = (choice) => {
+    const {imgCoord} = this.state;
+    clearInterval(this.interval);
+    ...내용생략
+};
+```
+
+
+<strong>매개변수</strong>가 있을 경우에는 (바꾸기 <strong>후</strong>에 모습) : ()을 삭제한다.
+
+```javascript
+<button id="rock" className="btn" onClick={this.onClickBtn('바위')}>바위</button>
+```
+
+```javascript
+onClickBtn = (choice) => (매개변수) => {
+    const {imgCoord} = this.state;
+    clearInterval(this.interval);
+    ...내용생략
+};
+```
+
+(매개변수) => 를 한개 더 추가를 해줘야한다. (매개변수도 같이 추가해줘야한다.)
+### 즉, 함수를 연달아 사용한다.
 
