@@ -157,7 +157,7 @@ onClickBtn = (choice) => {
 
 ```
 
-바꾸고 난 <strong>후</strong>에 모습 : ()을 삭제한다.
+바꾸고 난 <strong>후</strong>에 모습 : ()을 삭제한다.<br>
 ```javascript
 <button id="rock" className="btn" onClick={this.onClickBtn('바위')}>바위</button>
 <button id="scissor" className="btn" onClick={this.onClickBtn('가위')}>가위</button>
@@ -172,8 +172,7 @@ onClickBtn = (choice) => () => {
 };
 
 ```
-() => 를 한개 더 추가를 해줘야한다.
-
+() => 를 한개 더 추가를 해줘야한다.<br>
 
 
 <strong>매개변수</strong>가 있을 경우에는 (바꾸기 <strong>전</strong>에 모습)
@@ -208,3 +207,61 @@ onClickBtn = (choice) => (매개변수) => {
 (매개변수) => 를 한개 더 추가를 해줘야한다. (매개변수도 같이 추가해줘야한다.)
 ### 즉, 함수를 연달아 사용한다.
 
+
+## Hooks와 useEffect
+
+```javascript 
+import React, {useEffect} from 'react';
+```
+
+Hooks는 라이프사이클이 없는데 흉내를 낼 수 있다. 그것이 <strong>useEffect</strong>이다.<br>
+
+componentDidMount() { }<br>
+componentWillUnmount() { }<br>
+에서는 Hooks에 사용을 못한다.<br>
+
+라이플사이클을 대체한다.<br>
+
+
+```javascript
+// componentDidMount, componentDidUpdate 역할(1대1 대응은 아님)
+useEffect(() => { 
+    return () => { // componentWillUnmount의 역할을 한다.
+    }
+}, []); // 빈 배열로 일단 생성을 한다. 클로저 실수해서 일어났을 때, 두 번째 인수가 해결해주는 역할을 한다.
+```
+두 번째 인수 배열에 넣은 값(예제에서는 imgCoord)들이 바뀔 때 useEffect가 실행된다. <br>
+함수형은 렌더링할 때 통째로 다시 실행한다. <br>
+1대1 대응은 아님의 의미<br>
+
+```javascript
+useEffect(() => { 
+    console.log('다시 실행');
+    interval.current = setInterval(changeHand, 100);
+    return () => { // 
+        console.log('종료');
+        clearInterval(interval.current);
+    }
+}, [imgCoord]); // 클로저 문제를 해결하기위해 적어줘야 한다.
+```
+### 설명중요!!!
+콘솔창에 보면 실행 -> 「다시 실행, 종료」무한반복해서 이상할텐데, 이상한게 아니다.<br>
+componentDidMount가 아니라 useEffect에서는 두번쨰 배열(이미지 코드:imgCoord)가 바뀔 떄마다 전체부분(useEffect)이 다시 실행된다. <br>
+즉, 매번 clearInterval을 하기 떄문에 그냥 setTimeout을 하는 것과 동일하다.<br>
+윗 줄 보충설명) 즉, setInterval을 실행했다가 clearInterval로 setInterval을 종료시킨다.<br><br>
+
+그렇다면, 배열을 없애면 어떻게 될까? 처음에만 실행하고 <strong>다시 실행되지 않는다.</strong><br>
+```javascript
+useEffect(() => { 
+    console.log('다시 실행');
+    interval.current = setInterval(changeHand, 100);
+    return () => { // 
+        console.log('종료');
+        clearInterval(interval.current);
+    }
+}, []); 
+```
+한 번만 실행되고, 실행되지 않는다.<br>
+cf) 참조하고싶으면, 배열에 여러 개 넣어줄 수도 있다.<br>
+
+이해가 안되면 코드를 외우는게 좋을 수도 있다. <br>
