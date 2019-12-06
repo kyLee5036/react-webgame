@@ -4,8 +4,8 @@
 + [setInterval과 라이프사이클 연동하기](#setInterval과-라이프사이클-연동하기)
 + [가위바위보 게임 만들기](#가위바위보-게임-만들기)
 + [고차 함수와 Q&amp;A](#고차-함수와-Q&amp;A)
-+ Hooks와 useEffect
-+ 클래스와 Hooks 라이프사이클 비교
++ [Hooks와 useEffect](#Hooks와-useEffect)
++ [클래스와 Hooks 라이프사이클 비교](#클래스와-Hooks-라이프사이클-비교)
 
 ## 리액트 라이프사이클 소개
 
@@ -262,6 +262,62 @@ useEffect(() => {
 }, []); 
 ```
 한 번만 실행되고, 실행되지 않는다.<br>
-cf) 참조하고싶으면, 배열에 여러 개 넣어줄 수도 있다.<br>
+cf) 참조하고싶으면, 배열에 여러 개 넣어줄 수도 있다. <br>
+useEffect를 여러번 사용할 수있다.<br>
+<strong>배열에는 !꼭! useEffect를 다시 실행할 값만 넣어야 한다.</strong> 이렇게 안 할경우에는 동작이 이상해진다.<br>
+배열안에 : }, [imgCoord]); imgCoord말고 score, result를 넣어서 확인해보면 안다.
 
 이해가 안되면 코드를 외우는게 좋을 수도 있다. <br>
+
+
+## 클래스와 Hooks 라이프사이클 비교
+
+class의 경우 componentDidMount나 ComponentDidUpdate에서 모든 state를 조건문으로 분기 처리한다.
+
+
+### 클래스랑 Hooks의 라이플사이클 견해.
+|class인 견해|result|imgCoord|score|
+|:---:|:---:|:---:|:---:|
+|**ComponentDidMount**||||
+|**ComponentDidUpdate**||||
+|**ComponentWillUnmont**||||
+
+> ComponentDidMount(ComponentDidUpdate, ComponentWillUnmont)가 result, imgCoord, score을 한 꺼번에 사용(처리)을 할 수 있다.
+
+|hooks인 견해|ComponentDidMount|ComponentDidUpdate|ComponentWillUnmont|
+|:---:|:---:|:---:|:---:|
+|**result**||||
+|**imgCoord**||||
+|**score**||||
+
+> result하나가 ComponentDidMount, ComponentDidUpdate, ComponentWillUnmont를 useEffect안에서 사용(처리)을 할 수 있다.
+              
+
+#### 보충설명
+class인 경우
+
+> ComponentDidMount안에 setState를 사용해서 imgCoord, score, result를 한 번에 이용할 수 있다. <br> ComponentDidUpdate, ComponentWillUnmont에도 동일 (단, 코드의 기능에 따라 전부 안 넣어 줄 수도 있다.)
+```javascript
+ComponentDidMount() {
+    this.setState({
+        imgCoord: 3,
+        score: 1,
+        result: 2
+    })
+}
+```
+
+Hooks인 경우
+
+> useEffect를 사용하고, 배열 안 인수에 따라 사용할 수 있는 ImgCoord, Score, result가 바뀐다. <br>(배열 안에 인수가 하나일 수도있고, 없을수도 있고, 여러개 일수도 있다.)
+```javascript
+useEffect(() => {
+    setImgCoord();
+    setScore();
+}, [imgCoord, score]);
+
+useEffect(() => {
+    setImgCoord();
+    setResult();
+}, [result]);
+```
