@@ -1,7 +1,7 @@
 # 로또추첨기
 
 + [로또 추첨기 컴포넌트](#로또-추첨기-컴포넌트)
-+ SetTimeout 여러 번 사용하기
++ [SetTimeout 여러 번 사용하기](#SetTimeout-여러-번-사용하기)
 + ComponentdidUpdate
 + useEffect로 업데이트 감지하기
 + useMemo와 useCallback
@@ -31,6 +31,8 @@ state = {
   bonus: null, // 보너스 공
   redo: false, // 재 실행하기 위한 것
 }
+
+timeouts = [] // setTimeout를 여기 안에 담을 것임
 ```
 
 #### Ball.jsx
@@ -57,3 +59,87 @@ const Ball = React.memo(({ number }) => {
 
 그러면 뭐라고 부를까 ??
 > <strong>고차컴포넌트</strong>라고한다.
+
+
+## SetTimeout 여러 번 사용하기
+
+시작하자마 실행하기 위해서는 componentDidMount()를 사용한다.
+
+```js
+componentDidMount() {
+  console.log('didMount');
+  this.runTimeouts();
+  console.log('로또 숫자를 생성합니다.');
+}
+```
+
+> Tip) <strong>let을 사용하면 클로저문제가 안 생긴다.</strong> es6에 오면 편해진 기능이다. <br>
+
+#### Lottoclass.jsx
+```js
+timeouts = [];// 선언해주는 거 잊지말기!
+
+runTimeouts = () => {
+  console.log('runTimeouts');
+  const { winNumbers } = this.state;
+  for (let i = 0; i < winNumbers.length - 1; i++) {
+    this.timeouts[i] = setTimeout(() => {
+      this.setState((prevState) => {
+        return {
+          winBalls: [...prevState.winBalls, winNumbers[i]],
+        };
+      });
+    }, (i + 1) * 1000);
+  }
+  ...생략
+}
+       
+```
+코드 설명 : <br>
+winball의 숫자들을 넣어준다. <br>
+react에서 배열에 값을 넣을 떄에는 push가 아니라 예전 prevState를 사용해서 값을 넣어준다. <br>
+
+
+#### Lottoclass.jsx
+```js
+// ...생략했던 내용임
+this.timeouts[6] = setTimeout(() => {
+  this.setState({
+    bonus: winNumbers[6],
+    redo: true,
+  });
+}, 7000);
+```
+코드 설명 : <br>
+"redo: true"를 써주는 이유는 마지막 번호가 나오면 true이 되어서 버튼을 보여주기 위해서 사용한다.<br>
+그전까지 안 보여준다. <br>
+
+setTimeout와 같은 것(setInterval)을 쓸 때 주의점!<br>
+부모 컴포넌트는 자식 컴포넌트 없앨 수가 있다. 하지만, 여기서 setTimout을 항상 클리어를 해줘야한다. <br>
+내가 원치 않은데 컴포넌트가 사라질 경우에는 클리어를 안해줘서 의도치 않은 문제가 생기는 거다. <br>
+그리고, 클리어를 안해주면 메모리 상에 setTimout, setInterval가 계속 실행이 된다. 결국엔 메모리 누수현상이 얼어난다. 
+그러고 나서 this.state에서 문제가 생겨서 에러메세지가 나온다.<br>
+결국엔 componentWillUnmount를 사용해서 마지막까지 정리를 해줘야한다. <br>
+
+```JS
+componentDidMount() {
+  console.log('didMount');
+  this.runTimeouts();
+  console.log('로또 숫자를 생성합니다.');
+}
+
+componentWillUnmount() {
+  // 혹시나 setTimeout이 실행되지 않았는데 componentWillUnmount()가 발생할 수 있기때문에 this.timeouts.forEach를 사용해줬다.
+  this.timeouts.forEach((v) => {
+    // 마지막까지 정리를 해줘야한다.
+    clearTimeout(v);
+  });
+}
+```
+> componentWillUnmount() {}를 꼼꼼하게 해줘야한다!! <br>
+setInterval와 같은 경우에는 더더욱 주의를 해야한다.
+
+브라우저 껐을 경우에는 완전히 종료된다. 그래서 componentWillUnmount()가 발생 안한다. <br>
+<strong>여기서는 브라우저 끄지 않았을 때 생각</strong>하고, 부모컴포넌트가 자식컴포넌트를 없앴다고 생각해야 한다. <br>
+항상 componentWillUnmount()에서 clearTimeout를 해주자!!! <br>
+뭐든 생각하기 귀찮으면 componentWillUnmount를 해주는것만 잊지말기!!!<br>

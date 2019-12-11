@@ -22,6 +22,42 @@ class LottoClass extends Component {
         redo: false, // 재 실행하기 위한 것
     }
 
+    timeouts = [];
+
+    runTimeouts = () => {
+        console.log('runTimeouts');
+        const { winNumbers } = this.state;
+        for (let i = 0; i < winNumbers.length - 1; i++) {
+          this.timeouts[i] = setTimeout(() => {
+            this.setState((prevState) => {
+              return {
+                  // winball의 숫자들을 넣어준다. react에서 배열에 값을 넣을 떄에는 push가 아니라 예전 prevState를 사용해서 값을 넣어준다. 
+                winBalls: [...prevState.winBalls, winNumbers[i]],
+              };
+            });
+          }, (i + 1) * 1000);
+        }
+        // 보너스공
+        this.timeouts[6] = setTimeout(() => {
+          this.setState({
+            bonus: winNumbers[6],
+            redo: true,
+          });
+        }, 7000);
+    };
+
+    componentDidMount() {
+        console.log('didMount');
+        this.runTimeouts();
+        console.log('로또 숫자를 생성합니다.');
+    }
+
+    componentWillUnmount() {
+        this.timeouts.forEach((v) => {
+            clearTimeout(v);
+        });
+    }
+
 
     render() {
         const { winBalls, bonus, redo } = this.state;
