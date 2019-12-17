@@ -2,7 +2,7 @@
 
 + [로또 추첨기 컴포넌트](#로또-추첨기-컴포넌트)
 + [SetTimeout 여러 번 사용하기](#SetTimeout-여러-번-사용하기)
-+ ComponentdidUpdate
++ [ComponentdidUpdate](#ComponentdidUpdate)
 + useEffect로 업데이트 감지하기
 + useMemo와 useCallback
 + Hooks에 대한 자잘한 팁들
@@ -143,3 +143,88 @@ setInterval와 같은 경우에는 더더욱 주의를 해야한다.
 <strong>여기서는 브라우저 끄지 않았을 때 생각</strong>하고, 부모컴포넌트가 자식컴포넌트를 없앴다고 생각해야 한다. <br>
 항상 componentWillUnmount()에서 clearTimeout를 해주자!!! <br>
 뭐든 생각하기 귀찮으면 componentWillUnmount를 해주는것만 잊지말기!!!<br>
+
+## ComponentdidUpdate
+
+결국에는 리액트에서 직접 dom을 건드는게 하나도 없다. state만 바꿔서 저절로 바꾸게한다.<br> 
+state가 즉, 데이터만 바꿔준다 -> 이게 리액트에 장점이다.
+
+#### 수정하기 전
+```js
+componentDidMount() {
+  console.log('didMount');
+  runTimeouts = () => {
+      console.log('runTimeouts');
+      const { winNumbers } = this.state;
+      for (let i = 0; i < winNumbers.length - 1; i++) {
+        this.timeouts[i] = setTimeout(() => {
+          this.setState((prevState) => {
+            return {
+                // winball의 숫자들을 넣어준다. react에서 배열에 값을 넣을 떄에는 push가 아니라 예전 prevState를 사용해서 값을 넣어준다. 
+              winBalls: [...prevState.winBalls, winNumbers[i]],
+            };
+          });
+        }, (i + 1) * 1000);
+      }
+      // 보너스공
+      this.timeouts[6] = setTimeout(() => {
+        this.setState({
+          bonus: winNumbers[6],
+          redo: true,
+        });
+      }, 7000);
+  };
+  console.log('로또 숫자를 생성합니다.');
+}
+```
+
+#### 수정하기 후 (runTimeouts를 메서드를 만들어줘서 메서드만 불러준다.)
+```js
+runTimeouts = () => {
+  console.log('runTimeouts');
+  const { winNumbers } = this.state;
+  for (let i = 0; i < winNumbers.length - 1; i++) {
+    this.timeouts[i] = setTimeout(() => {
+      this.setState((prevState) => {
+        return {
+            // winball의 숫자들을 넣어준다. react에서 배열에 값을 넣을 떄에는 push가 아니라 예전 prevState를 사용해서 값을 넣어준다. 
+          winBalls: [...prevState.winBalls, winNumbers[i]],
+        };
+      });
+    }, (i + 1) * 1000);
+  }
+  // 보너스공
+  this.timeouts[6] = setTimeout(() => {
+    this.setState({
+      bonus: winNumbers[6],
+      redo: true,
+    });
+  }, 7000);
+};
+
+componentDidMount() {
+  console.log('didMount');
+  this.runTimeouts();
+  console.log('로또 숫자를 생성합니다.');
+}
+```
+componentDidUpdate는 어떤 상황에 사용할 건지 잘생각해야한다.<br>
+componentDidUpdate에서는 조건문이 제일 중요하다. <br>
+코드에 예로들면, Redo를 눌렀을 때 runTimeout이 동작하도록 코드 작성해야 한다.<br>
+그리고, 조건문으로 감싸지 않으면 매번 this.runTimouts가 생긴다. 모르겠으면 조건문 없애보고 실행해보기 (엄청난 것을 보게 될 것이다.)<br>
+
+```js
+componentDidUpdate(prevProps, prevState) {
+  // winBalls: [], bonus: null, redo: false 셋 중 사용해서 조건문을 걸게한다.
+  console.log('didUpdate');
+  // windballs가 0이 되는경우에 
+  if (this.state.winBalls.length === 0) { // winBalls가 없을 때 실행된다.
+    this.runTimeouts();
+  }
+  if (prevState.winNumbers !== this.state.winNumbers) {
+    console.log('로또 숫자를 생성합니다.');
+  }
+}
+```
+
+> 마지막으로 <strong>react devtool로 성능최적화</strong>가 되었는지 확인해보기!! (렌더링확인하는 거임)

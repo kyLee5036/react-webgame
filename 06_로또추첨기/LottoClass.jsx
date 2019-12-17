@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import Ball from './Ball';
 
-const getWinNumber = () => {
+const getWinNumbers = () => {
     console.log('getWinNumbers');
     const candidate = Array(45).fill().map((v, i) => i + 1);
     const shuffle = [];
@@ -52,11 +52,33 @@ class LottoClass extends Component {
         console.log('로또 숫자를 생성합니다.');
     }
 
+    componentDidUpdate(prevProps, prevState) {
+        console.log('didUpdate');
+        if (this.state.winBalls.length === 0) { 
+          this.runTimeouts();
+        }
+        if (prevState.winNumbers !== this.state.winNumbers) {
+          console.log('로또 숫자를 생성합니다.');
+        }
+    }
+
     componentWillUnmount() {
         this.timeouts.forEach((v) => {
             clearTimeout(v);
         });
     }
+
+
+    onClickRedo = () => { // 초기화하는 곳
+        console.log('onClickRedo');
+        this.setState({
+          winNumbers: getWinNumbers(), // 당첨 숫자들
+          winBalls: [],
+          bonus: null, // 보너스 공
+          redo: false,
+        });
+        this.timeouts = [];
+      };
 
 
     render() {
