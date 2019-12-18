@@ -3,7 +3,7 @@
 + [로또 추첨기 컴포넌트](#로또-추첨기-컴포넌트)
 + [SetTimeout 여러 번 사용하기](#SetTimeout-여러-번-사용하기)
 + [ComponentdidUpdate](#ComponentdidUpdate)
-+ useEffect로 업데이트 감지하기
++ [useEffect로 업데이트 감지하기](#useEffect로-업데이트-감지하기)
 + useMemo와 useCallback
 + Hooks에 대한 자잘한 팁들
 
@@ -228,3 +228,86 @@ componentDidUpdate(prevProps, prevState) {
 ```
 
 > 마지막으로 <strong>react devtool로 성능최적화</strong>가 되었는지 확인해보기!! (렌더링확인하는 거임)
+
+
+## useEffect로 업데이트 감지하기
+
+기본 useEffect<br>
+```js
+useEffect(() => { }, []);  
+```
+빈 배열이면 componentDidMount와 동일, 즉 componentDidMount를 만들었다.<br>
+
+```js
+useEffect(() => {
+  console.log('useEffect');
+  for (let i = 0; i < winNumbers.length - 1; i++) {
+    timeouts.current[i] = setTimeout(() => { 
+      setWinBalls((prevBalls) => [...prevBalls, winNumbers[i]]);
+    }, (i + 1) * 1000);
+  }
+  timeouts.current[6] = setTimeout(() => { // 보너스 볼
+    setBonus(winNumbers[6]);
+    setRedo(true);
+  }, 7000);
+  return () => { // ComponentWillUnmount는 return이다.
+    timeouts.current.forEach((v) => {
+      clearTimeout(v);
+    });
+  };
+}, []); // 빈 배열이면 componentDidMount와 동일
+// 배열에 요소가 있으면 componentDidMount랑 componentDidUpdate 둘 다 수행
+```
+useEffect(() => { }, [인자없음]); : class에서 componentDidMount만 실행<br>
+useEffect(() => { }, [인자있음]); : class에서 componentDidMount랑 componentDidUpdate 둘 다 수행<br>
+return() : class에서 ComponentWillUnmount 수행<br><br>
+class에서 보면 componentDidUpdate의 조건문을 "this.state.winBalls.length === 0" 해주었다.<br>
+```js
+componentDidUpdate(prevProps, prevState) {
+  console.log('didUpdate');
+  if (this.state.winBalls.length === 0) { 
+    this.runTimeouts();
+  }
+}
+```
+그래서 빈배열에서도 class와 같이 "winBalls.length === 0" 이렇게 똑같이 해주었다.<br>
+> 오류가 난다. <br>
+> 여기서 오류는 useEffect가 초반에 2번 실행된다. <br>
+> 처음부분에 winBalls.length === 0이라서 componentDidMount 실행되자마자 또 winBalls.length === 0이라서 한번 더 실행된다.<br>
+> 오류를 해결하기위해서는 <strong>배열인자에서 바뀌는 시점에 값</strong>을 넣어줘야한다. "winBalls.length === 0" 가 아니라 "timeouts.current"다.<br>
+
+여기에서 바뀌는 시점이 timeouts.current라고했는데 무수하게 많다. 어떻게 구별할 것인가?
+```js
+useEffect(() => {
+  ...이하생략
+}, [timeouts.current]); // <- 이 부분 구별할거임.
+```
+
+```js
+for (let i = 0; i < winNumbers.length - 1; i++) {
+  ...생략
+  // 참고로 여기는 timeouts.current 바뀌는걸까 ? 
+  timeouts.current[i] = setTimeout(() => { 
+    // current[i] 배열요소 안에 값을 넣어주는 것이다 바뀌는것이 아니다!!
+    setWinBalls((prevBalls) => [...prevBalls, winNumbers[i]]);
+  }, (i + 1) * 1000);
+}
+```
+
+```js
+const onClickRedo = (() => {
+  console.log('onClickRedo');
+  console.log(winNumbers);
+  setWinNumbers(getWinNumbers());
+  setWinBalls([]);
+  setBonus(null);
+  setRedo(false);
+  // 참고로 여기는 timeouts.current바뀌는걸까 ? 
+  timeouts.current = []; 
+  // [timeouts.current]가 언제바뀌는가? 여기에서 바뀐다. // 직접 바뀌는 부분이다. 왜냐하면, current에 직접넣어줘서
+  // 예전 current랑 달라지기때문에 여기에서 바뀌는걸 감지한다.
+}, [winNumbers]);
+```
+즉, 여기에 있는 timeouts.current가 useEffect의 배열인자에 바뀌는 값을 넣어주는 것이다! <br>
+
+> useEffect는 class의 componentDidUpdate역할이랑 Hooks의 componentDidUpdate역할이랑 일치하기 않다는 것을 인지해야한다.

@@ -2,7 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { hot } from 'react-hot-loader/root'
 
-import LottoClass from './LottoClass';
-const HotLottoClass = hot(LottoClass);
+// import LottoClass from './LottoClass';
+// const HotLottoClass = hot(LottoClass);
 
-ReactDOM.render(<HotLottoClass />, document.querySelector('#root'));
+import LottoHooks from './LottoHooks';
+const HotLottoHooks = hot(LottoHooks);
+
+ReactDOM.render(<HotLottoHooks />, document.querySelector('#root'));
