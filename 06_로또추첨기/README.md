@@ -323,7 +323,8 @@ const lottoNumbers =() => getWinNumbers();
 const lottoNumbers = useMemo(() => getWinNumbers(), []); // 두 번째 배열이 가장 중요하다!
 ```
 > 여기에서 두번 쨰 배열 요소가 바뀌면 lottoNumbers가 다시 실행된다.<br>
-Hooks에 <strong>useMemo</strong>를 사용한다면, getWinNumbers()를 재실행되지 않고, 기억하고 있다. 그래서 콘솔창에서 보면 getWinNumbers가 한 번만 실행이 된다. 위와 설명했듯이, useMemo가 사용하지 않으면 getWinNumbers가 계속 실행된다.<br><br>
+Hooks에 <strong>useMemo</strong>를 사용한다면, getWinNumbers()를 재실행되지 않고, 기억하고 있다. 그래서 콘솔창에서 보면 getWinNumbers가 한 번만 실행이 된다. 위와 설명했듯이, useMemo가 사용하지 않으면 getWinNumbers가 계속 실행된다.<br>
+
 배열이 바꾸기 전까지 계속 결괏값을 기억하는 것이다!!<br>
 추천 방법은 함수에다가 console.log 다 넣어주는 것도 좋다.<br><br>
 
