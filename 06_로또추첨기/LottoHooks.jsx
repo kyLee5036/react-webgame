@@ -22,7 +22,7 @@ const LottoHooks = () => {
   const [redo, setRedo] = useState(false);
   const timeouts = useRef([]);
   
-
+  // useEffect가 익숙해져야 한다. 
   useEffect(() => {
     console.log('useEffect');
     for (let i = 0; i < winNumbers.length - 1; i++) {
@@ -35,15 +35,18 @@ const LottoHooks = () => {
       setBonus(winNumbers[6]);
       setRedo(true);
     }, 7000);
-    return () => { 
+    return () => { // ComponentWillUnmount는 return이다.
       timeouts.current.forEach((v) => {
         clearTimeout(v);
       });
     };
-  }, [timeouts.current]); 
+  }, [timeouts.current]); // 빈 배열이면 componentDidMount와 동일
 
+  useEffect(() => {
+    console.log('로또 숫자를 생성합니다.');
+  }, [winNumbers]);
 
-  const onClickRedo = (() => {
+  const onClickRedo = useCallback(() => {
     console.log('onClickRedo');
     console.log(winNumbers);
     setWinNumbers(getWinNumbers());

@@ -4,7 +4,7 @@
 + [SetTimeout 여러 번 사용하기](#SetTimeout-여러-번-사용하기)
 + [ComponentdidUpdate](#ComponentdidUpdate)
 + [useEffect로 업데이트 감지하기](#useEffect로-업데이트-감지하기)
-+ useMemo와 useCallback
++ [useMemo와 useCallback](#useMemo와-useCallback)
 + Hooks에 대한 자잘한 팁들
 
 
@@ -311,3 +311,92 @@ const onClickRedo = (() => {
 즉, 여기에 있는 timeouts.current가 useEffect의 배열인자에 바뀌는 값을 넣어주는 것이다! <br>
 
 > useEffect는 class의 componentDidUpdate역할이랑 Hooks의 componentDidUpdate역할이랑 일치하기 않다는 것을 인지해야한다.
+
+## useMemo와 useCallback
+
+Hooks에서 
+```js 
+const lottoNumbers =() => getWinNumbers();
+```
+콘솔창에 보면 getWinNumbers가 자꾸 실행된다. 만약, 이게 랜더링할 때마다 10초씩 걸리면 시간이 많이걸린다. 그래서 getWinNumbers를 자꾸 실행하지 않고, 기억할 수 있게 useMemo가 있다.<br>
+```js
+const lottoNumbers = useMemo(() => getWinNumbers(), []); // 두 번째 배열이 가장 중요하다!
+```
+> 여기에서 두번 쨰 배열 요소가 바뀌면 lottoNumbers가 다시 실행된다.<br>
+Hooks에 <strong>useMemo</strong>를 사용한다면, getWinNumbers()를 재실행되지 않고, 기억하고 있다. 그래서 콘솔창에서 보면 getWinNumbers가 한 번만 실행이 된다. 위와 설명했듯이, useMemo가 사용하지 않으면 getWinNumbers가 계속 실행된다.<br><br>
+배열이 바꾸기 전까지 계속 결괏값을 기억하는 것이다!!<br>
+추천 방법은 함수에다가 console.log 다 넣어주는 것도 좋다.<br><br>
+
+### useMemo, useRef 비교   
+<strong>useMemo</strong> :복잡한 함수 결괏값을 기억<br>
+<strong>useRef</strong> : 일반 값을 기억<br><br>
+
+### useMemo, useCallback 비교
+<strong>useMemo</strong> 함수의 리턴값을 기억한다.<br>
+<strong>useCallback</strong> 함수 전체를 기억한다.<br><br>
+
+변경하기 전
+```js
+const onClickRedo = () => {
+  console.log('onClickRedo');
+  console.log(winNumbers);
+  setWinNumbers(getWinNumbers());
+  setWinBalls([]);
+  setBonus(null);
+  setRedo(false);
+  timeouts.current = []; 
+};
+```
+함수를 기억하지 않고, 렌더링할 때 마다 재 실행한다. 사실상 코드에서 useCallback없어도 문제없이 잘 실행이된다.<br>
+
+
+변경하기 후(두 번째 배열에 인자 넣지 않을 경우)
+```js
+const onClickRedo = useCallback(() => {
+  console.log('onClickRedo');
+  console.log(winNumbers);
+  setWinNumbers(getWinNumbers());
+  setWinBalls([]);
+  setBonus(null);
+  setRedo(false);
+  timeouts.current = []; 
+}, []);
+```
+내가 리셋버튼을 눌렀을 때 콘솔창에 보면 winNumbers의 로또 번호가 전과 계속 동일하게 되어있다. 리셋버튼을 눌러도 로또번호가 바뀌지 않는다!! 그러므로 배열의 인자가 무척 중요하다는 것을 알 수 있다.<br>
+
+> 여기 useCabllback에서는 함수자체를 기억해두고, 두 번째 배열에 빈 값이 들어있어서 함수컴포넌트가 재 실행되도 onClickRedo가 새로 실행되지 않는다. 또한, 함수를 기억하면서 한 번만 실행하고 싶으면 배열에 빈 값을 넣어준다.  <br>
+
+이렇게 실행하면 어떻게 될까?<br>
+변경하기 후(두 번째 배열에 인자 넣었을 경우)<br>
+```js
+const onClickRedo = useCallback(() => {
+  console.log('onClickRedo');
+  console.log(winNumbers);
+  setWinNumbers(getWinNumbers());
+  setWinBalls([]);
+  setBonus(null);
+  setRedo(false);
+  timeouts.current = []; 
+}, [winNumbers]);
+```
+
+위에 언급과 같이, useCallback으로 함수를 다 감싸주면 정상적으롤 움직이는 것은 문제가 없다. <br>
+하지만, console.log(winNumbers);를 해보면 winNumbers를 기억을 해서 첫번째 숫자가 계속 콘솔에 찍힌다. 즉, 새로운 번호가 찍히는 줄 알았는데 번호가 바뀌지 않는다. 예전 값을 계속 가지고 있다. 두 번째 배열에 값이 없다. null이기 때문이다. <br>
+결론은 두번 째 배열 인수를 꼭 넣어줘야한다. 두 번째 배열이 바뀔 때 마다 새로 실행이 되기떄문에 값을 넣어줘야 한다.<br>
+
+### <strong>useEffect, useMemo, useCallback</strong>에서 두번 째 인자가 매우 중요하다.
+
+그렇다면 함수마다 useCallback을 사용하는게 옳은 일이까? 반은 맞고, 반은 틀리다.<br>
+onClick의 onClickRedo가 onClickRedo함수에 값을 넘겨줄려고 한다.<br>
+```js
+{bonus && <Ball number={bonus} onClick={onClickRedo} />}
+```
+useCallback에서 필수로 적용할 때가 있다. <strong>부모 컴포넌트가 자식 컴포넌트에게 함수를 넘길 때에는 useCallback을 꼭 해줘야한다.</strong> useCallback가 없으면 매번 새로운 함수가 생성이 된다.<br> 
+부모 컴포넌트가 자식 컴포넌트에게 props를 넘겨줄 때 자식 컴포넌트의 props대답은<br> 
+> "어? 부모로 받은 props가 바꼈네? 매번 새로운 props를 주네"
+
+라고 인식해서 자식 컴포넌트가 헷갈려서 매번 새로운 렌더링한다.(<strong>리렌더링</strong>) 리렌더링 안해주기 위해서는 <strong>useCallback을 사용해서</strong> 자식 컴포넌트가 쓸데없이 리렌더링 되지않게 해준다. 그렇다면<br> 
+>"부모로 받은 함수가 같구나!"<br>
+
+라고 알아차릴 수 있다. <br>
+그래서 부모 컴포넌트그가 자식 컴포넌트에 props을 넘길 때 useCallback 반드시 해줘야한다.<br> 
