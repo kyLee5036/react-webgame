@@ -5,7 +5,7 @@
 + [ComponentdidUpdate](#ComponentdidUpdate)
 + [useEffect로 업데이트 감지하기](#useEffect로-업데이트-감지하기)
 + [useMemo와 useCallback](#useMemo와-useCallback)
-+ Hooks에 대한 자잘한 팁들
++ [Hooks에 대한 자잘한 팁들](#Hooks에-대한-자잘한-팁들)
 
 
 ## 로또 추첨기 컴포넌트
@@ -401,3 +401,57 @@ useCallback에서 필수로 적용할 때가 있다. <strong>부모 컴포넌트
 
 라고 알아차릴 수 있다. <br>
 그래서 부모 컴포넌트그가 자식 컴포넌트에 props을 넘길 때 useCallback 반드시 해줘야한다.<br> 
+
+## Hooks에 대한 자잘한 팁들
+
+Hooks는 순서가 중요하다!<br>
+```js
+if (조건) {
+  const [redo, setRedo] = useState(false);
+}
+```
+조건문안에 선언하는 것은 절대 안된다.<br>
+또, useEffect안에서 useState를 넣으면안된다.
+```js
+useEffect(() => {
+  useState();
+})
+```
+<br>
+
+```js
+const lottoNumbers = useMemo(() => getWinNumbers(), []);
+```
+useMemo는 []바뀌기 전까지 return 값을 기억한다.<br><br> 
+useCallback은 함수를 기억한다.<br>
+```js 
+useEffect(() => { ...내용물 }, []);
+```
+useEffect는 []바뀔 때 "...내용물"을 실행한다. <br><br> 
+
+
+두가지 패턴에 대해서 설명할 것이다. 알아두는 것도 좋다.<br>
+Tip) ComponentDidMount만 호출하고, ComponentDidUpdate는 호출하지 않는다. 또는, ajax요청할 경우
+```js
+useEffect(() => {
+  // 여기서 ajax요청해도 상관없다.
+  // react Hooks에서 ajax요청할 건데 이런식으로 해도 상관없다.
+}, []);
+```
+Tip) ComponentDidUpdate만 호출하고, ComponentDidMount는 호출하지 않는다. 또는, ajax요청할 경우
+```js
+const mounted = useRef(false);
+useEffect(() => {
+  if(!mounted.current) { 
+    mounted.current = true;
+  } else {
+    // 여기서 ajax요청해도 상관없다.
+    // react Hooks에서 ajax요청할 건데 이런식으로 해도 상관없다. 대신에, 
+    // 바뀌는 값에 따라 실행한다.
+  }
+}, [바뀌는 값]);
+```
+무엇보다 사용하면서 깨달아야한다. 
+
+여기가지 useState, useRef, useEffect, useMemo, useCallback을 배웠다. 
+
