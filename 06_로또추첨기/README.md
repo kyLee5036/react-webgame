@@ -453,5 +453,5 @@ useEffect(() => {
 ```
 무엇보다 사용하면서 깨달아야한다. 
 
-여기가지 useState, useRef, useEffect, useMemo, useCallback을 배웠다. 
+여기까지 <strong>useState, useRef, useEffect, useMemo, useCallback</strong>을 배웠다. 
 
