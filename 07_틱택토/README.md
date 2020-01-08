@@ -169,12 +169,14 @@ reducer는 함수이다.<br><br>
 ## reducer, action, dispatch의 관계
 
 state에 접근하는 방법
-```jsx
+
+#### 1) state에 접근
+```jsx 
 {state.winner && <div>{state.winner} 님의 승리</div>} 
  ```
 
 
-
+#### 2) dispatch 적용하기
  ```jsx
 export const SET_WINNER = 'SET_WINNER';
 
@@ -198,6 +200,7 @@ return (
  ```
 
 
+#### 3) reducer도 같이 추가하기
 reducer도 추가해준다.
 ```jsx
 const reducer = (state, action) => {
@@ -215,7 +218,7 @@ const reducer = (state, action) => {
 }
  ```
 
-#### table.jsx
+#### 4) table.jsx - 클릭 동작확인하기
 table에 클릭해서 action이 잘 작동하는지 확인하려고 한다.
 ```jsx
 const Table = ( {onclick} ) => {
@@ -228,7 +231,7 @@ const Table = ( {onclick} ) => {
  ```
 
 
-#### table.jsx
+#### 5) table.jsx - 행,열 중에서 열 3개가 잘 나오는 지 확인하기
 table에 클릭이랑 1열 3개가 세로로 3개가 잘 나오는지 확인하려고 한다.
 ```jsx
 // onclick은 TicTacToeHooks의 Table에서 onlick을 넘겨줬으니까 필요하다.
@@ -241,7 +244,7 @@ const Table = ( {onclick, tableData} ) => {
 }
  ```
 
-#### Tr.jsx
+#### 6) Tr.jsx
 ```jsx
 const Tr = () => {
   return (
@@ -254,7 +257,7 @@ const Tr = () => {
  
  각각의 tr에서 td도 3개를 만들어줘야한다.
 
-#### Table.jsx
+#### 7) Table.jsx - 3x3 테이블 적용하기
 ```jsx
 // tableData가
 // tableData: [
@@ -266,13 +269,13 @@ const Tr = () => {
 const Table = ( {onclick, tableData} ) => {
   return (
     <table onClick={onclick}>
-      {Array(tableData.length).fill().map((tr, i) => (<Tr rowDate={tableData[i]} />))}
+      {Array(tableData.length).fill().map((tr, i) => (<Tr rowData={tableData[i]} />))}
     </table>
   )
 }
  ```
 
-#### Tr.jsx
+#### 8) Tr.jsx - 3x3 테이블 적용하기
 ```jsx
 const Tr = ({rowData}) => {
   return (
