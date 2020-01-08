@@ -1,6 +1,7 @@
 # 틱택토
 
 + [택택토와 useReducer 소개](#택택토와-useReducer-소개)
++ [reducer, action, dispatch의 관계](#reducer,-action,-dispatch의-관계)
 
 여기서부터는 class를 안 만들고 Hooks로!!!
 
@@ -107,7 +108,11 @@ const TicTacToeHooks = () => {
 }
 ```
 
-#### 6) TicTacToeHooks.jsx ( 1) 수정 )
+#### 6) TicTacToeHooks.jsx ( useState를 useReducer로 수정 )
+
+먼저, useReducer를 선언해주고, reducer,
+initalState에 차근차근 데이터를 넣어준다.
+
 ```jsx
 import React, {useState, useReducer} from 'react';
 import Table from './table';
@@ -160,4 +165,121 @@ reducer는 함수이다.<br><br>
 여기서 실제로 클릭하는 것은 td이다. td를 TicTacToeHooks에 전달할려면 2단을 거쳐가야한다.<br>
 이런 해결하기 위해서는 context-api를 사용하는데 다음시간(지뢰찾기에서 공부한다.)<br>
 
+
+## reducer, action, dispatch의 관계
+
+state에 접근하는 방법
+```jsx
+{state.winner && <div>{state.winner} 님의 승리</div>} 
+ ```
+
+
+
+ ```jsx
+export const SET_WINNER = 'SET_WINNER';
+
+const onclickTable = useCallback(() => {
+    // dispatch에 안에 들어가는 것을 action이라고 한다.
+    // action 객체를 만들어 줘야한다.
+    // dispatch를 하면 action을 실행한다.
+    // action을 해석해서 state를 바꿔주는 역할이 필요한데 그게 위에 있는 reducer이다. 다음에는 reducer에 추가를 해준다.
+    dispatch({
+      type: SET_WINNER, winner:'o'
+    })
+  }, []);
+
+return (
+    <>
+      {/* 테이블 클릭 시 */}
+      <Table onClick={onclickTable}/> 
+      {state.winner && <div>{state.winner} 님의 승리</div>} 
+    </>
+  );
+ ```
+
+
+reducer도 추가해준다.
+```jsx
+const reducer = (state, action) => {
+  // action의 type별로 구분을 할 것이다.
+  switch(action.type) {
+    case SET_WINNER: 
+    // state.winner = action.winner; 이렇게 직접바꾸면 안된다.
+    // 새로운 객체를 만들어서 바뀐 값만 바꿔줘야한다. spread문법
+    // 기존 state를 직접 바꾸는게 아니라 새로운 state만 바꿔주는 것이다.
+      return {
+        ...state,
+        winner: action.winner,    
+      }
+  }
+}
+ ```
+
+#### table.jsx
+table에 클릭해서 action이 잘 작동하는지 확인하려고 한다.
+```jsx
+const Table = ( {onclick} ) => {
+  return (
+    <table onClick={onclick}>
+      <Tr>{''}</Tr>
+    </table>
+  )
+}
+ ```
+
+
+#### table.jsx
+table에 클릭이랑 1열 3개가 세로로 3개가 잘 나오는지 확인하려고 한다.
+```jsx
+// onclick은 TicTacToeHooks의 Table에서 onlick을 넘겨줬으니까 필요하다.
+const Table = ( {onclick, tableData} ) => {
+  return (
+    <table onClick={onclick}>
+      {Array(tableData.length).fill().map((tr) => (<Tr />))}
+    </table>
+  )
+}
+ ```
+
+#### Tr.jsx
+```jsx
+const Tr = () => {
+  return (
+    <tr>
+      <Td>{''}</Td>
+    </tr>
+  ) 
+}
+ ```
+ 
+ 각각의 tr에서 td도 3개를 만들어줘야한다.
+
+#### Table.jsx
+```jsx
+// tableData가
+// tableData: [
+//     ['', '', ''], 1열이 rowData
+//     ['', '', ''],
+//     ['', '', ''],
+//   ], // 이렇게 생겼음
+
+const Table = ( {onclick, tableData} ) => {
+  return (
+    <table onClick={onclick}>
+      {Array(tableData.length).fill().map((tr, i) => (<Tr rowDate={tableData[i]} />))}
+    </table>
+  )
+}
+ ```
+
+#### Tr.jsx
+```jsx
+const Tr = ({rowData}) => {
+  return (
+    <tr>
+      {Array(rowData.length).fill().map((td) => (<Td>{''}</Td>) )}
+    </tr>
+  ) 
+}
+ ```
 
