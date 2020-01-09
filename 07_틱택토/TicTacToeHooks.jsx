@@ -11,6 +11,8 @@ const initalState = {
   ],
 };
 export const SET_WINNER = 'SET_WINNER';
+export const CLICK_CELL = 'CLICK_CELL';
+export const CHANGE_TURN = 'CHANGE_TURN'
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -20,6 +22,22 @@ const reducer = (state, action) => {
         ...state,
         winner: action.winner,
       };
+    case CLICK_CELL: {// 클릭한 셀에서 tableData의 안에 O,X를 넣어줘야한다.
+      const tableData = [...state.tableData]; // 먼저 얕은 복사를 해준다.
+      tableData[action.row] = [...tableData[action.row]];// 또 얕은복사를 해준다 
+      tableData[action.row][action.cell] = state.turn;
+      return {
+        ...state,
+        tableData,
+        
+      };
+    }
+    case CHANGE_TURN: { // 'O'면 'X'로 바꿔주고, 'X'면 'O'로 바꿔준다
+      return {
+        ...state,
+        turn: state.turn === 'O' ? 'X' : 'O',
+      }
+    }
   }
 }
 
@@ -32,7 +50,7 @@ const TicTacToeHooks = () => {
 
   const onClickTable = useCallback(() => {
     dispatch({
-      type: SET_WINNER, winner:'o'
+      type: SET_WINNER, winner:'O'
     })
   }, []);
 
@@ -40,7 +58,7 @@ const TicTacToeHooks = () => {
   return (
 
     <>
-      <Table onClick={onClickTable} tableData={state.tableData} /> 
+      <Table onClick={onClickTable} tableData={state.tableData} dispatch={dispatch}/> 
       {state.winner && <div> {state.winner} 님의 승리</div>} 
     </>
   );

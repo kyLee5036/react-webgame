@@ -2,6 +2,7 @@
 
 + [택택토와 useReducer 소개](#택택토와-useReducer-소개)
 + [reducer, action, dispatch의 관계](#reducer,-action,-dispatch의-관계)
++ [action 만들어 dispatch 하기](#action-만들어-dispatch-하기)
 
 여기서부터는 class를 안 만들고 Hooks로!!!
 
@@ -285,4 +286,186 @@ const Tr = ({rowData}) => {
   ) 
 }
  ```
+
+## action 만들어 dispatch 하기
+
+> 1. td 클릭시 몇번 째 줄, 칸 console.log에서 알아내기 - (1,2,3,4)
+> 2. 턴 바꾸기 (O, X 번갈아가면서) - (5,6,7,8,9)
+
+#### 1) Td.jsx 
+
+```jsx
+const Td = () => {
+  const onClickTd = () => {
+    
+  }
+  return (
+    <td onClick={onClickTd}>{''}</td>
+  );
+};
+```
+
+
+#### 2) Table.jsx
+
+```jsx
+const Table = ( {onclick, tableData} ) => {
+  return (
+    <table>
+      {Array(tableData.length).fill().map((tr, i) => (<Tr key={i} rowIndex={i} rowData={tableData[i]} />))}
+    </table>
+  );
+};
+```
+테이블에서 몇번 째 <strong>줄</strong>을 나타내기 위해서 <strong>rowIndex</strong>에 'i'를 사용하고 rowIndex로 값을 넘겨준다.<br>
+i에 [0,1,2]가 들어있다.<br>
+위에 보면 Table의 onclick 이제부터 사용하지 않으니까 삭제해도 된다.
+
+#### 3) Tr.jsx
+```jsx
+const Tr = ({rowData, rowIndex}) => {
+  return (
+    <tr>
+      {Array(rowData.length).fill().map((td, i) => (<Td key={i} rowIndex={rowIndex} cellIndex={i} >{''}</Td>) )}
+    </tr>
+  );
+};
+```
+테이블에서 몇번 째 <strong>칸</strong>을 나타내기 위해서 <strong>cellIndex</strong>를 하고, Table컴포넌트에서도 rowIndex도 꼭 받아야한다. (줄, 칸)<br>
+그러면 Td컴포넌트에서 rowIndex, cellIndex를 사용할 수가 있다.<br>
+rowIndex는 Table컴포넌트에서 데이터를 받아온다. cellIndex은 Tr컴포넌트에서 생성해준다.
+
+#### 4) Td.jsx
+```jsx
+const Td = ({rowIndex, cellIndex}) => {
+
+  const onClickTd = useCallback(() => {
+    console.log(rowIndex, cellIndex)
+  }, []);
+
+  return (
+    <td onClick={onClickTd}>{''}</td>
+  );
+};
+```
+Td컴포넌트에 파라미터 안에 rowIndex, cellIndex를 받아오고, console.log로 확인하면 테이블에 몇번 째 칸, 몇번 째 줄을 알 수가 있다.<br>
+
+여기까지 기본적인 테이블 행,렬 위치를 알 수가 있게된다.
+
+
+#### 5) TicTacToeHooks.jsx
+
+클릭 시 이벤트를 나타내기 위해서 CLICK_CELL을 추가한다.
+```jsx
+export const CLICK_CELL = 'CLICK_CELL';
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case SET_WINNER:
+      // state.winner = action.winner; 이렇게 하면 안됨.
+      return {
+        ...state,
+        winner: action.winner,
+      };
+    case CLICK_CELL: {// 클릭한 셀에서 tableData의 안에 O,X를 넣어줘야한다.
+      // 불변성을 지켜야하기 때문에, 바꾸고 싶은 부분만 바꿔줘야한다.
+      const tableData = [...state.tableData]; // 먼저 얕은 복사를 해준다.
+      tableData[action.row] = [...tableData[action.row]];// 또 얕은복사를 해준다 
+      // action.row는 TD에서 넣어줬던 dispatch의 row 값이다
+      // 결국엔, 불변성 지켜야하는데 단점이다. 나중에 immer라는 라이브러리가 있는데 가독성문제를 해결해준다.
+      tableData[action.row][action.cell] = state.turn;
+      // 코드가 지저분하기 때문에 immer라는 라이브러리가 나중에 정리한다.
+      return {
+        ...state,
+        tableData,
+        
+      };
+    }
+  }
+}
+```
+얕은 복사를 2번이나 해야하는 번거러움이 있긴한데, (리액트의 불변성을 위해서) immer라는 라이브러리를 사용하면 이렇게 안해도 된다.
+
+#### 6) TicTacToeHooks.jsx
+```jsx
+export const CHANGE_TURN = 'CHANGE_TURN'
+const reducer = (state, action) => {
+  switch (action.type) {
+  case CHANGE_TURN: { // 'O'면 'X'로 바꿔주고, 'X'면 'O'로 바꿔준다
+      return {
+        ...state,
+        turn: state.turn === 'O' ? 'X' : 'O',
+      }
+    }
+  }
+}
+return (
+  <>
+    <Table onClick={onClickTable} tableData={state.tableData} dispatch={dispatch}/> 
+  </>
+);
+```
+
+테이블에서 dispatch={dispatch}를 넘겨줘야한다.<br>
+```jsx
+  <Table onClick={onClickTable} tableData={state.tableData} dispatch={dispatch}/> 
+```
+Td에도 dispatch를 사용하기 위해서는 Table, Tr에도 dispatch를 사용해줘야한다.<br>
+dispatch를 일일히 다 넘겨주는게 귀찮은데, 여기서 해결하기위해서는 context-api를 나중에 사용한다.<br>
+onClickTable설명은 전 강의설명에 적혀져있다. 헷갈리지 말 것!!
+
+
+#### 7) Table.jsx
+
+TicTacToeHooks의 dispatch를 받아와야한다. 
+```jsx
+const Table = ( {tableData, dispatch} ) => {
+  return (
+    <table>
+      {Array(tableData.length).fill().map((tr, i) => (
+        <Tr key={i} rowIndex={i} rowData={tableData[i]} dispatch={dispatch} />
+      ))}
+    </table>
+  );
+};
+```
+
+#### 8) Tr.jsx
+Table의 dispatch를 받아와야한다. (귀찮구먼... 뭐.. 좋은게 없을까?? context-api가 있으면 좋긴한데..)
+```jsx
+const Tr = ({rowData, rowIndex, dispatch}) => {
+  return (
+    <tr>
+      {Array(rowData.length).fill().map((td, i) => (
+        <Td key={i} rowIndex={rowIndex} cellIndex={i} cellData={rowData[i]} dispatch={dispatch}>{''}</Td>
+      ))}
+    </tr>
+  );
+};
+```
+
+
+#### 9) Td.jsx
+Tr의 dispatch를를 받아와야한다. (귀찮구먼... 뭐.. 좋은게 없을까?? context-api가 있으면 좋긴한데..)
+```jsx
+import { CLICK_CELL, CHANGE_TURN } from './TicTacToeHooks';
+
+const Td = ({rowIndex, cellIndex, dispatch, cellData}) => {
+
+  const onClickTd = useCallback(() => {
+    console.log(rowIndex, cellIndex);
+    dispatch({ // 액션은 마음대로 만들어도 상관없는데 reducer에서 잘 처리해줘야한다.
+      type: CLICK_CELL, row: rowIndex, cell: cellIndex
+    });
+    dispatch({
+      type: CHANGE_TURN
+    });
+    
+  }, []);
+
+  return (
+    <td onClick={onClickTd}>{cellData}</td>
+  );
+};
+```
 
