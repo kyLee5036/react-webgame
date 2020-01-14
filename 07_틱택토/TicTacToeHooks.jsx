@@ -1,4 +1,4 @@
-import React, {useState, useReducer, useCallback} from 'react';
+import React, {useEffect, useReducer, useCallback} from 'react';
 import Table from './Table';
 
 const initalState = {
@@ -9,6 +9,7 @@ const initalState = {
     ['', '', ''],
     ['', '', ''],
   ],
+  recentCell: [-1, -1]
 };
 export const SET_WINNER = 'SET_WINNER';
 export const CLICK_CELL = 'CLICK_CELL';
@@ -29,6 +30,7 @@ const reducer = (state, action) => {
       return {
         ...state,
         tableData,
+        recentCell: [action.row, action.cell],
         
       };
     }
@@ -42,11 +44,9 @@ const reducer = (state, action) => {
 }
 
 const TicTacToeHooks = () => {
-  // const [winner, setWinner] = useState(''); // 승자를 만들어주고
-  // const [turn, setTurn] = useState(''); // 처음에는 O 턴 다음에는 X 턴
-  // const [tableData, setTableData] = useState([['', '', ''], ['', '', ''], ['', '', '']]); // 이차원 배열로 3X3 만들어 준다.
 
   const [state, dispatch] = useReducer(reducer, initalState)
+  const { tableData, turn, winner, recentCell } = state; 
 
   const onClickTable = useCallback(() => {
     dispatch({
@@ -55,11 +55,39 @@ const TicTacToeHooks = () => {
   }, []);
 
 
+  useEffect(() => {
+    const [row, cell] = recentCell;
+    if (row < 0) {
+      return;
+    }
+
+    let win = false;
+    if (tableData[row][0] === turn && tableData[row][1] === turn && tableData[row][2] === turn) { // 가로줄 검사
+      win = true;
+    }
+    if (tableData[0][cell] === turn && tableData[1][cell] === turn && tableData[2][cell] === turn) { // 세로줄 검사
+      win = true;
+    }
+    if (tableData[0][0] === turn && tableData[1][1] === turn && tableData[2][2] === turn) { // 대각선 검사
+      win = true;
+    }
+    if (tableData[0][2] === turn && tableData[1][1] === turn && tableData[2][0] === turn) { // 대각선 검사
+      win = true;
+    }
+    console.log(win, row, cell, tableData, turn);
+    if ( win) { // 승리 할 경우
+      dispatch({ type: SET_WINNER, winner: turn });
+    } else { // 무승부 일 경우
+
+    }
+
+  }, [recentCell]) // 클릭한 셀이 바뀔 때마다
+
   return (
 
     <>
-      <Table onClick={onClickTable} tableData={state.tableData} dispatch={dispatch}/> 
-      {state.winner && <div> {state.winner} 님의 승리</div>} 
+      <Table onClick={onClickTable} tableData={tableData} dispatch={dispatch}/> 
+      {winner && <div> {winner} 님의 승리</div>} 
     </>
   );
 };

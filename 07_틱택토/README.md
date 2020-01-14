@@ -3,6 +3,7 @@
 + [택택토와 useReducer 소개](#택택토와-useReducer-소개)
 + [reducer, action, dispatch의 관계](#reducer,-action,-dispatch의-관계)
 + [action 만들어 dispatch 하기](#action-만들어-dispatch-하기)
++ [틱택토 구현하기](#틱택토-구현하기)
 
 여기서부터는 class를 안 만들고 Hooks로!!!
 
@@ -468,4 +469,154 @@ const Td = ({rowIndex, cellIndex, dispatch, cellData}) => {
   );
 };
 ```
+
+## 틱택토 구현하기
+
+한 번 눌렀던 칸은 못 눌러오기
+승자, 패자 판단하기
+
+
+「한 번 눌렀던 칸은 못 눌러오기」
+
+#### 1) Td.jsx
+```jsx
+const onClickTd = useCallback(() => {
+    console.log(rowIndex, cellIndex);
+
+    // 이미 cellData가 있으면, return 끊어버린다.
+    // 즉, cellData에 값이 있으면, return으로 다음 거 실행안하게 해준다.
+    if ( cellData ) {
+      return;
+    }
+
+    // usereducer는 state가 비동기적으로 바뀐다.
+    // 그래서 비동기 state를 처리할 때에는 useEffect로 처리해야한다.
+
+    dispatch({ // 액션은 마음대로 만들어도 상관없는데 reducer에서 잘 처리해줘야한다.
+      type: CLICK_CELL, row: rowIndex, cell: cellIndex
+    });
+    dispatch({
+      type: CHANGE_TURN
+    });
+    
+    // cellData의 값이 바뀌니까 배열안에 cellData를 넣어준다.
+  }, [cellData]);
+```
+
+### useReducer의 state비동기 처리방법 -> useEffect사용할 것!! 
+> <strong>useReducer</strong>는 state가 비동기적으로 바뀐다.<br>
+> 그래서 비동기 state를 처리할 때에는 <strong>useEffect</strong>로 처리해야한다.<br>
+
+#### 2) TicTacToeHooks.jsx
+```jsx
+const TicTacToeHooks = () => {
+
+  const [state, dispatch] = useReducer(reducer, initalState)
+  const { tableData, turn, winner } = state; 
+
+  const onClickTable = useCallback(() => {
+    dispatch({
+      type: SET_WINNER, winner:'O'
+    })
+  }, []);
+
+
+  // usereducer는 state가 비동기적으로 바뀌게 때문에 state를 처리할 때에는 useEffect로 처리해야한다. 
+  // 승자를 판단하는 것
+  useEffect(() => { // 왜 갑자기? useEffect??? 이유는 위 쪽에 설명이 있다.
+    let win = false;
+    if (tableData[row][0] === turn && tableData[row][1] === turn && tableData[row][2] === turn) {
+      win = true;
+    }
+    if (tableData[0][cell] === turn && tableData[1][cell] === turn && tableData[2][cell] === turn) {
+      win = true;
+    }
+    if (tableData[0][0] === turn && tableData[1][1] === turn && tableData[2][2] === turn) {
+      win = true;
+    }
+    if (tableData[0][2] === turn && tableData[1][1] === turn && tableData[2][0] === turn) {
+      win = true;
+    }
+  }, [tableData])
+
+  return (
+
+    <>
+      <Table onClick={onClickTable} tableData={tableData} dispatch={dispatch}/> 
+      {winner && <div> {winner} 님의 승리</div>} 
+    </>
+  );
+};
+```
+
+여기서 내가 눌렀던 셀을 알아야하기 때문에 recentCell를 생성하겠다.<br>
+최근에 눌렀던 셀 : recentCell <br>
+state에도 추가를 해줘야한다. <br>
+
+#### 3) TicTacToeHooks.jsx
+```jsx
+const initalState = {
+  winner: '',
+  turn: 'O',
+  tableData: [
+    ['', '', ''],
+    ['', '', ''],
+    ['', '', ''],
+  ],
+  recentCell: [-1, -1] // 초기화를 [-1, -1]를 해주고, recentCell을 추가한다.
+};
+
+...생략
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    ...생략
+    case CLICK_CELL: {
+      const tableData = [...state.tableData]; 
+      tableData[action.row] = [...tableData[action.row]];
+      tableData[action.row][action.cell] = state.turn;
+      return {
+        ...state,
+        tableData,
+        recentCell: [action.row, action.cell], // 여기에 내가 눌렀던 행, 열의 데이터를 받아온다.
+        // 클릭하면 tableData, recentCell을 기억을 할 것이다.
+        
+      };
+    }
+    ...생략
+  }
+}
+```
+
+#### 4) TicTacToeHooks.jsx
+```jsx
+// usereducer는 state가 비동기적으로 바뀌게 때문에 state를 처리할 때에는 useEffect로 처리해야한다.
+  // 승자를 판단하는 것
+  useEffect(() => {
+    const [row, cell] = recentCell;
+    // 이거 한 이유는 기본적으로 첫 렌더링할 때도 useEffect 실행하기 때문에, recentCell이 [-1, -1] 바로 실행을 
+    // 걸려줄려고 밑에 바로 조건문을 달았다. 즉, 바로 승자를 체크 안하기 위해서이다.
+    if (row < 0) {
+      return;
+    }
+
+    let win = false;
+    if (tableData[row][0] === turn && tableData[row][1] === turn && tableData[row][2] === turn) { // 가로줄 검사
+      win = true;
+    }
+    if (tableData[0][cell] === turn && tableData[1][cell] === turn && tableData[2][cell] === turn) { // 세로줄 검사
+      win = true;
+    }
+    if (tableData[0][0] === turn && tableData[1][1] === turn && tableData[2][2] === turn) { // 대각선 검사
+      win = true;
+    }
+    if (tableData[0][2] === turn && tableData[1][1] === turn && tableData[2][0] === turn) { // 대각선 검사
+      win = true;
+    }
+    
+  }, [recentCell]); // 클릭한 셀이 바뀔 때마다
+```
+
+// 9 분 40초부터 다시 <br>
+// 에러 수정 중
 
