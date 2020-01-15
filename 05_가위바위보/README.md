@@ -4,6 +4,7 @@
 + [setInterval과 라이프사이클 연동하기](#setInterval과-라이프사이클-연동하기)
 + [가위바위보 게임 만들기](#가위바위보-게임-만들기)
 + [고차 함수와 Q&amp;A](#고차-함수와-Q&amp;A)
++ [고차 함수에서의 에러](#고차-함수에서의-에러)
 + [Hooks와 useEffect](#Hooks와-useEffect)
 + [클래스와 Hooks 라이프사이클 비교](#클래스와-Hooks-라이프사이클-비교)
 
@@ -207,6 +208,51 @@ onClickBtn = (choice) => (매개변수) => {
 (매개변수) => 를 한개 더 추가를 해줘야한다. (매개변수도 같이 추가해줘야한다.)
 ### 즉, 함수를 연달아 사용한다.
 
+## 고차 함수에서의 에러
+
+함수 컴포넌트에서는 
+
+```jsx
+...생략
+
+const onClickBtn = (chooice) => {
+ ...내용생략
+}
+
+return (
+<>
+    <div id="computer" style={{ background: `url(https://en.pimg.jp/023/182/267/1/23182267.jpg) ${imgCoord} 0` }} />
+    <div>
+    <button id="id" className="btn" onClick={onClickBtn('바위')}>바위</button>
+    <button id="scissor" className="btn" onClick={onClickBtn('가위')}>가위</button>
+    <button id="paper" className="btn" onClick={onClickBtn('보')}>보</button>
+    </div>
+</>
+);
+
+```
+이 상태로 사용한다면, 
+
+> Too many re-renders. React limits the number of renders to prevent an infinite loop.
+
+
+해결하기 위해서는 
+```jsx
+const onClickBtn = (chooice) => () => {
+
+}
+```
+위에 <strong>(  )</strong>를 추가하였더니 에러가 사라졌다.
+
+
+클래스 컴포넌트에서의 에러내용은 
+
+> Uncaught Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+
+
+둘 다 보면 공통점인게 <strong>React limits the number of nested updates to prevent infinite loops.</strong>가 있다.
+아무래도 렌더링하면서 무한루프를 맴돌고 있고 때문이다. 
+그래서 고차함수에서 해결하는 방법도 있을 것이다. 
 
 ## Hooks와 useEffect
 
