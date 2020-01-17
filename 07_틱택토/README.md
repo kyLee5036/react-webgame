@@ -291,7 +291,7 @@ const Tr = ({rowData}) => {
 ## action 만들어 dispatch 하기
 
 > 1. td 클릭시 몇번 째 줄, 칸 console.log에서 알아내기 - (1,2,3,4)
-> 2. 턴 바꾸기 (O, X 번갈아가면서) - (5,6,7,8,9)
+> 2. 턴 바귀기 (O, X 번갈아가면서) - (5,6,7,8,9)
 
 #### 1) Td.jsx 
 
@@ -638,28 +638,20 @@ CLICK_CELL 하는 도중에 CHANGE_TURN 도 같이하는 거라서 상대턴이 
 즉, 비동기라서 CLICK_CELL을 하면 CHANGE_TURN도 같이 움직인다.<br>
 
 해결할려면 <br>
-### Td.jsx
+### 5) Td.jsx
 
 Td.jsx에서 CHANGE_TURN을 없애준다.
 
 ```jsx
-// 바꾸기 전
+// 바뀌기 전
+// dispatch({ type: CLICK_CELL, row: rowIndex, cell: cellIndex });
+// dispatch({ type: CHANGE_TURN });
 
-// dispatch({ 
-//   type: CLICK_CELL, row: rowIndex, cell: cellIndex
-// });
-// 바꾸기 후
-
-// dispatch({
-//   type: CHANGE_TURN
-// });
-
-dispatch({ 
-  type: CLICK_CELL, row: rowIndex, cell: cellIndex
-});
+// 바뀌기 후
+dispatch({ type: CLICK_CELL, row: rowIndex, cell: cellIndex });
 ```
 
-#### TicTacToeHook.jsx
+#### 6) TicTacToeHook.jsx
 CHANGE_TURN을 비동기 useEffect안에 넣어줘야한다.
 
 ```jsx
@@ -699,34 +691,40 @@ CLICK_CELL을 하고 CHANGE_TURN를 처리하는데,  CLICK_CELL를 처리하는
 
 무승부 검사<br>
 무승부 검사는 테이블의 데이터가 다 찼는지 검사하면 된다.<br>
+
+#### 7) TicTacToeHook.jsx
 ```jsx
 if ( win) { // 승리 할 경우
-      dispatch({ type: SET_WINNER, winner: turn });
-      // 리셋할 것을 코드 입력!!!!
-    } else { 
-      let all = true; // 일단 칸들이 다 있는지를 확인해준다. all이 true면 무승부라는 의미
-      tableData.array.forEach((row) => { // 무승부 일 경우
-        row.forEach((cell) => {
-          if(!cell) { // all이 하나라도 안 찼는 칸이 있으면 무승부이다.
-            all = false;
-          }
-        });
-      });
-      if ( all ) { // 무승부라면 리셋을 해준다.
-        // 리셋할 것을 코드 입력!!!!
-      } else {
-        dispatch({ // 무승부가 아니라면, 턴을 넘겨준다.
-          type: CHANGE_TURN
-        });
+  dispatch({ type: SET_WINNER, winner: turn });
+  // 리셋할 것을 코드 입력!!!!
+} else { 
+  let all = true; // 일단 칸들이 다 있는지를 확인해준다. all이 true면 무승부라는 의미
+  tableData.array.forEach((row) => { // 무승부 일 경우
+    row.forEach((cell) => {
+      if(!cell) { // all이 하나라도 안 찼는 칸이 있으면 무승부이다.
+        all = false;
       }
-    }
+    });
+  });
+  if ( all ) { // 무승부라면 리셋을 해준다.
+    // 리셋할 것을 코드 입력!!!!
+  } else {
+    dispatch({ // 무승부가 아니라면, 턴을 넘겨준다.
+      type: CHANGE_TURN
+    });
+  }
+}
 ```
 
 무승부이거나, 승리할 경우에 테이블 리셋만들어보기!!!
 
+#### 8) TicTacToeHook.jsx
 ```jsx
+...생략
+
 export const RESET_GAME = 'RESET_GAME';
 ...생략
+
 const reducer = (state, action) => {
   ...생략
   case RESET_GAME : {
@@ -742,11 +740,14 @@ const reducer = (state, action) => {
     }
   }
 }
+
 ...생략
 ```
 
+#### 9) TicTacToeHook.jsx
 ```jsx
 ...생략
+
 if ( win) { // 승리 할 경우
   dispatch({ type: SET_WINNER, winner: turn });
   dispatch({ type: RESET_GAME});
@@ -768,63 +769,13 @@ if ( win) { // 승리 할 경우
     });
   }
 }
+
 ...생략
 ```
 
 
-
 정리
-> 먼저, useReducer는 리덕스에서 따온 걸 리액트에 도입했다.
-> 기본적으로 useState를 사용했는데 useState가 100개, 1000개 되면 관리하기 힘들고, 한 번에 정리하기 위해서 useReducer를 사용한다.
+> 먼저, useReducer는 리덕스에서 따온 걸 리액트에 도입했다.<br>
+> 기본적으로 useState를 사용했는데 useState가 100개, 1000개 되면 관리하기 힘들고, 한 번에 정리하기 위해서 useReducer를 사용한다.<br>
 > state를 모아두고, action을 통해서 행동을 움직인다. action을 dispatch를 해서 action이 움직이다.
 그리고, 항상 state를 바꿀 때 불변성이 중요하다.
-
-```jsx
-
-```
-
-
-
-
-```jsx
-
-```
-
-
-
-
-```jsx
-
-```
-
-
-
-
-```jsx
-
-```
-
-
-
-
-```jsx
-
-```
-
-
-
-
-```jsx
-
-```
-
-
-
-
-```jsx
-
-```
-
-
-
-
