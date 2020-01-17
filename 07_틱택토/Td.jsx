@@ -14,9 +14,6 @@ const Td = ({rowIndex, cellIndex, dispatch, cellData}) => {
     dispatch({ 
       type: CLICK_CELL, row: rowIndex, cell: cellIndex
     });
-    dispatch({
-      type: CHANGE_TURN
-    });
     
   }, [cellData]);
 

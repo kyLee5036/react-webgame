@@ -14,6 +14,7 @@ const initalState = {
 export const SET_WINNER = 'SET_WINNER';
 export const CLICK_CELL = 'CLICK_CELL';
 export const CHANGE_TURN = 'CHANGE_TURN'
+export const RESET_GAME = 'RESET_GAME';
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -40,6 +41,19 @@ const reducer = (state, action) => {
         turn: state.turn === 'O' ? 'X' : 'O',
       }
     }
+    case RESET_GAME : {
+      return {
+        ...state,
+        tableData: [
+          ['', '', ''],
+          ['', '', ''],
+          ['', '', ''],
+        ],
+        turn: 'O',
+        recentCell: [-1, -1]
+      }
+    }
+    
   }
 }
 
@@ -77,8 +91,24 @@ const TicTacToeHooks = () => {
     console.log(win, row, cell, tableData, turn);
     if ( win) { // 승리 할 경우
       dispatch({ type: SET_WINNER, winner: turn });
-    } else { // 무승부 일 경우
+      dispatch({ type: RESET_GAME});
 
+    } else { 
+      let all = true; // 일단 칸들이 다 있는지를 확인해준다. all이 true면 무승부라는 의미
+      tableData.forEach((row) => { // 무승부 일 경우
+        row.forEach((cell) => {
+          if(!cell) { // all이 하나라도 안 찼는 칸이 있으면 무승부이다.
+            all = false;
+          }
+        });
+      });
+      if ( all ) { // 무승부라면 리셋을 해준다.
+        dispatch({ type: RESET_GAME});
+      } else {
+        dispatch({ // 무승부가 아니라면, 턴을 넘겨준다.
+          type: CHANGE_TURN
+        });
+      }
     }
 
   }, [recentCell]) // 클릭한 셀이 바뀔 때마다

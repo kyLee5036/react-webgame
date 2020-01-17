@@ -182,7 +182,7 @@ state에 접근하는 방법
  ```jsx
 export const SET_WINNER = 'SET_WINNER';
 
-const onclickTable = useCallback(() => {
+const onclickTable = useCallback( () => {
     // dispatch에 안에 들어가는 것을 action이라고 한다.
     // action 객체를 만들어 줘야한다.
     // dispatch를 하면 action을 실행한다.
@@ -190,7 +190,7 @@ const onclickTable = useCallback(() => {
     dispatch({
       type: SET_WINNER, winner:'o'
     })
-  }, []);
+  }, [] );
 
 return (
     <>
@@ -617,6 +617,214 @@ const reducer = (state, action) => {
   }, [recentCell]); // 클릭한 셀이 바뀔 때마다
 ```
 
-// 9 분 40초부터 다시 <br>
-// 에러 수정 중
+### 비동기 에러문제 해결하기
+
+CLICK_CELL을 실행하면 CLICK_CELL의 action보면 recentCell이 생긴다.
+```jsx
+case CLICK_CELL: {
+  const tableData = [...state.tableData]; 
+  tableData[action.row] = [...tableData[action.row]];
+  tableData[action.row][action.cell] = state.turn;
+  return {
+    ...state,
+    tableData,
+    recentCell: [action.row, action.cell], // CLICK_CELL을 실행하면 CLICK_CELL의 action보면 recentCell이 생긴다.
+  };
+}
+```
+recentCell이 생기면서, useEffect의 배열에 recentCell가 있다. 그래서, useEffect 실행하는 직전에  CHANGE_TURN도 같이 움직여서 턴이 넘어가버렸다. <br>
+즉, 여기서 <strong>비동기문제</strong>가 있다. <br>
+CLICK_CELL 하는 도중에 CHANGE_TURN 도 같이하는 거라서 상대턴이 바로 넘어가서 비동기 문제가 일어난다. <br>
+즉, 비동기라서 CLICK_CELL을 하면 CHANGE_TURN도 같이 움직인다.<br>
+
+해결할려면 <br>
+### Td.jsx
+
+Td.jsx에서 CHANGE_TURN을 없애준다.
+
+```jsx
+// 바꾸기 전
+
+// dispatch({ 
+//   type: CLICK_CELL, row: rowIndex, cell: cellIndex
+// });
+// 바꾸기 후
+
+// dispatch({
+//   type: CHANGE_TURN
+// });
+
+dispatch({ 
+  type: CLICK_CELL, row: rowIndex, cell: cellIndex
+});
+```
+
+#### TicTacToeHook.jsx
+CHANGE_TURN을 비동기 useEffect안에 넣어줘야한다.
+
+```jsx
+useEffect(() => {
+  const [row, cell] = recentCell;
+  if (row < 0) {
+    return;
+  }
+
+  let win = false;
+  if (tableData[row][0] === turn && tableData[row][1] === turn && tableData[row][2] === turn) { // 가로줄 검사
+    win = true;
+  }
+  if (tableData[0][cell] === turn && tableData[1][cell] === turn && tableData[2][cell] === turn) { // 세로줄 검사
+    win = true;
+  }
+  if (tableData[0][0] === turn && tableData[1][1] === turn && tableData[2][2] === turn) { // 대각선 검사
+    win = true;
+  }
+  if (tableData[0][2] === turn && tableData[1][1] === turn && tableData[2][0] === turn) { // 대각선 검사
+    win = true;
+  }
+  console.log(win, row, cell, tableData, turn);
+  if ( win) { // 승리 할 경우
+    dispatch({ type: SET_WINNER, winner: turn });
+  } else { // 무승부 일 경우
+    dispatch({
+      type: CHANGE_TURN
+    });
+  }
+}, [recentCell]) // 클릭한 셀이 바뀔 때마다
+```
+
+흐름을 중요한다. <br>
+제일 중요한 건 dispatch가 state를 바꾸는게 비동기이다.<br>
+CLICK_CELL을 하고 CHANGE_TURN를 처리하는데,  CLICK_CELL를 처리하는 도중에 CHANGE_TURN도 같이 바꼈다. (즉, 클릭하는 순간, 턴도 같이 바꿨다!!)<br><br>
+
+무승부 검사<br>
+무승부 검사는 테이블의 데이터가 다 찼는지 검사하면 된다.<br>
+```jsx
+if ( win) { // 승리 할 경우
+      dispatch({ type: SET_WINNER, winner: turn });
+      // 리셋할 것을 코드 입력!!!!
+    } else { 
+      let all = true; // 일단 칸들이 다 있는지를 확인해준다. all이 true면 무승부라는 의미
+      tableData.array.forEach((row) => { // 무승부 일 경우
+        row.forEach((cell) => {
+          if(!cell) { // all이 하나라도 안 찼는 칸이 있으면 무승부이다.
+            all = false;
+          }
+        });
+      });
+      if ( all ) { // 무승부라면 리셋을 해준다.
+        // 리셋할 것을 코드 입력!!!!
+      } else {
+        dispatch({ // 무승부가 아니라면, 턴을 넘겨준다.
+          type: CHANGE_TURN
+        });
+      }
+    }
+```
+
+무승부이거나, 승리할 경우에 테이블 리셋만들어보기!!!
+
+```jsx
+export const RESET_GAME = 'RESET_GAME';
+...생략
+const reducer = (state, action) => {
+  ...생략
+  case RESET_GAME : {
+    return {
+      ...state,
+      tableData: [
+        ['', '', ''],
+        ['', '', ''],
+        ['', '', ''],
+      ],
+      turn: 'O',
+      recentCell: [-1, -1]
+    }
+  }
+}
+...생략
+```
+
+```jsx
+...생략
+if ( win) { // 승리 할 경우
+  dispatch({ type: SET_WINNER, winner: turn });
+  dispatch({ type: RESET_GAME});
+
+} else { 
+  let all = true; // 일단 칸들이 다 있는지를 확인해준다. all이 true면 무승부라는 의미
+  tableData.forEach((row) => { // 무승부 일 경우
+    row.forEach((cell) => {
+      if(!cell) { // all이 하나라도 안 찼는 칸이 있으면 무승부이다.
+        all = false;
+      }
+    });
+  });
+  if ( all ) { // 무승부라면 리셋을 해준다.
+    dispatch({ type: RESET_GAME});
+  } else {
+    dispatch({ // 무승부가 아니라면, 턴을 넘겨준다.
+      type: CHANGE_TURN
+    });
+  }
+}
+...생략
+```
+
+
+
+정리
+> 먼저, useReducer는 리덕스에서 따온 걸 리액트에 도입했다.
+> 기본적으로 useState를 사용했는데 useState가 100개, 1000개 되면 관리하기 힘들고, 한 번에 정리하기 위해서 useReducer를 사용한다.
+> state를 모아두고, action을 통해서 행동을 움직인다. action을 dispatch를 해서 action이 움직이다.
+그리고, 항상 state를 바꿀 때 불변성이 중요하다.
+
+```jsx
+
+```
+
+
+
+
+```jsx
+
+```
+
+
+
+
+```jsx
+
+```
+
+
+
+
+```jsx
+
+```
+
+
+
+
+```jsx
+
+```
+
+
+
+
+```jsx
+
+```
+
+
+
+
+```jsx
+
+```
+
+
+
 
