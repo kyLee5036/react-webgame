@@ -4,6 +4,7 @@
 + [reducer, action, dispatch의 관계](#reducer,-action,-dispatch의-관계)
 + [action 만들어 dispatch 하기](#action-만들어-dispatch-하기)
 + [틱택토 구현하기](#틱택토-구현하기)
++ [테이블 최적화하기](#테이블-최적화하기)
 
 여기서부터는 class를 안 만들고 Hooks로!!!
 
@@ -638,7 +639,7 @@ CLICK_CELL 하는 도중에 CHANGE_TURN 도 같이하는 거라서 상대턴이 
 즉, 비동기라서 CLICK_CELL을 하면 CHANGE_TURN도 같이 움직인다.<br>
 
 해결할려면 <br>
-### 5) Td.jsx
+#### 5) Td.jsx
 
 Td.jsx에서 CHANGE_TURN을 없애준다.
 
@@ -779,3 +780,35 @@ if ( win) { // 승리 할 경우
 > 기본적으로 useState를 사용했는데 useState가 100개, 1000개 되면 관리하기 힘들고, 한 번에 정리하기 위해서 useReducer를 사용한다.<br>
 > state를 모아두고, action을 통해서 행동을 움직인다. action을 dispatch를 해서 action이 움직이다.
 그리고, 항상 state를 바꿀 때 불변성이 중요하다.
+
+
+## 테이블 최적화하기
+
+리렌더링 파악하는 방법 <br>
+
+Td.jsx에 밑에 코드를 써 주는이유는 클릭해서 렌더링되는 곳을 알아내기 위해서이다. <br>
+여기서 보면 true true true false 가 나오면다면 cellData의 쪽이 바뀌고 있는 것이다.<br>
+```jsx
+const ref = useRef([]);
+useEffect(() => {
+  console.log(rowIndex === ref.current[0], cellIndex === ref.current[1], dispatch === ref.current[2], cellData === ref.current[3] );
+  ref.current = [rowIndex, cellIndex, dispatch, cellData];
+}, [rowIndex, cellIndex, dispatch, cellData]);
+```
+
+> 사실 React.memo를 적용하는게 훨 나을수도있다. 위에 것은 참고 하면된다. <br>
+> 자식 컴포넌트 memo적용하면 부모도 memo적용할 수 있다.
+
+
+useMemo로 컴포넌트 최후의 수단으로 최적화 할 수 있다. 
+```jsx
+<tr>
+{Array(rowData.length).fill().map((td, i) => (
+  useMemo(
+    <Td key={i} rowIndex={rowIndex} cellIndex={i} cellData={rowData[i]} dispatch={dispatch}>{''}</Td>,
+    [rowData[i]]
+  )
+))}
+</tr>
+```
+Td도 동일하게 적용하면 된다!!
