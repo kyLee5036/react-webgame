@@ -5,7 +5,7 @@ import Form from './Form';
 // 지뢰 상태를 코드로 만들 것이다.
 export const CODE = {
   MINE : -7, // 지뢰 칸
-  NORMAL : -1,          // 정상 칸
+  NORMAL : -1,          // 정상 칸(닫혀 있는 칸)
   QUESTION : -2,        // 물음 표
   FALG : -3,            // 깃발
   QUESTION_MINE : -4,   // 물음표 지뢰
@@ -15,15 +15,39 @@ export const CODE = {
 }
 
 export const TableContext = createContext({
-  tableData: [
-    [],
-    [],
-    [],
-    [],
-    [],
-  ],
+  tableData: [],
   dispatch: () => {},
 });
+
+// 지뢰를 심는 함수
+const plantMine = (row, cell, mine) => {
+  console.log(row, cell, mine);
+  const candiate = Array(row*cell).fill().map((arr, i) => { // 0 ~ 99 칸
+    return i;
+  });
+  const shuffle = [];
+  while ( candiate.length > row * cell - mine ) { 
+    const chosen = candiate.splice(Math.floor(Math.random() * candiate.length), 1)[0]; 
+    shuffle.push(chosen);
+  }
+  const data = []; 
+  for ( let i = 0; i < row; i ++ ) { // 테이블 데이터을 구현
+    const rowData = [];
+    data.push(rowData);
+    for ( let j = 0; j < cell; j ++ ) {
+      rowData.push(CODE.NORMAL);
+    }
+  }
+
+  for ( let k = 0; k < shuffle.length; k++ ) { // 칸 위치 찾기
+    const ver = Math.floor(shuffle[k] / cell ); 
+    const hor = shuffle[k] % cell;
+    data[ver][hor] = CODE.MINE;
+  }
+
+  console.log(data);
+  return data; // tableData에 지뢰를 심는다
+};
 
 const initalState = {
   tableData: [],
@@ -51,9 +75,9 @@ const MineSearch = () => {
 
   const [state, dispatch] = useReducer(reducer, initalState);
 
-  const value = useMemo(() => {
+  const value = useMemo(() => (
     { tableData : state.tableData, dispatch }
-  }, [state.tableData]);
+  ), [state.tableData]);
 
   return (
     <>

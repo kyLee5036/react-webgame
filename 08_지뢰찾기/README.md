@@ -2,6 +2,7 @@
 
 + [Context API 소개와 지뢰찾기](#Context-API-소개와-지뢰찾기)
 + [createContexnt와 Provider](#createContexnt와-Provider)
++ [useContext 사용해 지뢰 칸 렌더링](#useContext-사용해-지뢰-칸-렌더링)
 
 
 시작하기 전에
@@ -279,9 +280,9 @@ import React, {useReducer, createContext, useMemo} from 'react'; // useMemo를 �
 const MineSearch = () => {
   const [state, dispatch] = useReducer(reducer, initalState);
 
-  const value = useMemo(() => {
+  const value = useMemo(() => (
     { tableData : state.tableData, dispatch }
-  }, [state.tableData]);
+  ), [state.tableData]);
   // state.tableData가 바뀔 때마다 value를 갱신해주면 된다. 
   // 이런식으로 useMemo로 캐싱을 해줘야만 성능저하가 덜 일어난다.
   // 그리고 dispatch는 빈 배열안에 사옹안해도 된다. 항상 같게 유지하기 떄문이다.
@@ -335,7 +336,7 @@ const reducer = (state, action) => {
 // 지뢰 상태를 코드로 만들 것이다.
 export const CODE = {
   MINE : -7, // 지뢰 칸
-  NORMAL : -1,          // 정상 칸
+  NORMAL : -1,          // 정상 칸(닫혀 있는 칸)
   QUESTION : -2,        // 물음 표
   FALG : -3,            // 깃발
   QUESTION_MINE : -4,   // 물음표 지뢰
@@ -346,126 +347,222 @@ export const CODE = {
 }
 ```
 
+## useContext 사용해 지뢰 칸 렌더링
 
-* * *
-* * *
-* * *
+plantMine이라는 함수를 구현하겠다. <br>
 
-### createContexnt와 Provider의 소스 코드
-#### MineSearch.jsx
+#### 1) MineSearch.jsx
 ```jsx
-import React, {useReducer, createContext, useMemo} from 'react';
-import Table from './Table';
-import Form from './Form';
+// 지뢰를 심는 함수
+const plantMine = (row, cell, mine) => {
+  console.log(row, cell, mine);
+  const candiate = Array(row*cell).fill.map((arr, i) => { // 0 ~ 99 칸
+    return i;
+  });
+  const shuffle = [];
+  while ( candiate.length > row * cell - mine ) { 
+    const chosen = candiate.splice(Math.floor(Math.random() * candiate.length), 1)[0]; 
+    shuffle.push(chosen);
+  }
+  const data = []; 
+  for ( let i = 0; i < row; i ++ ) { // 테이블 데이터을 구현
+    const rowData = [];
+    data.push(rowData);
+    for ( let j = 0; j < cell; j ++ ) {
+      rowData.push(CODE.NORMAL);
+    }
+  }
 
-// 지뢰 상태를 코드로 만들 것이다.
-export const CODE = {
-  MINE : -7, // 지뢰 칸
-  NORMAL : -1,          // 정상 칸
-  QUESTION : -2,        // 물음 표
-  FALG : -3,            // 깃발
-  QUESTION_MINE : -4,   // 물음표 지뢰
-  FLAG_MINE : -5,       // 깃발 지뢰
-  CLICKED_MINE : -6,    // 클릭 지뢰
-  OPENED : 0,           // 칸을 연칸 : 0 이상이면 전부 OPEND 열리도록 한다. 
-}
+  for ( let k = 0; k < shuffle.length; k++ ) { // 칸 위치 찾기
+    const ver = Math.floor(shuffle[k] / cell ); 
+    const hor = shuffle[k] % cell;
+    data[ver][hor] = CODE.MINE;
+  }
 
-export const TableContext = createContext({
-  tableData: [ 
-    // 일단 임시로 이렇게 만들었다. 이런 식으로 데이터가 들어온다는 의미임. 상관 안해도된다!!! 
-    [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, ],
-    [-1, -1, -1, -1, -7, -7, -7, -1, -1, -1, -1, -1, -1, -1, -1, ],
-    [],
-    [],
-    [],
-  ],
-  dispatch: () => {},
-});
-
-const initalState = {
-  tableData: [],
-  timer: 0,
-  result: '',
+  console.log(data);
+  return data; // tableData에 지뢰를 심는다
 };
 
-export const START_GAME = 'START_GAME'
+```
+코드 내용모르겠으면 javascript 강좌에서 보면 된다.<br>
 
-const reducer = (state, action) => {
-  switch (action.type) {
-    case START_GAME: 
-    return { 
-      ...state,
-      tableData : plantMine(action.row, action.cell, action.mine)
-    }
-    default:
-      return state;
+화면 구성을 안해서 에러가 나오므로. 화면 구성도 해준다.<br>
+
+#### 2) Table.jsx, Tr.jsx, Td.jsx는 생략하겠음 (틱택토이랑 비슷하므로)
+
+console.log의 결과내용이
+<pre><code>0: (10) [-1, -1, -1, -1, -1, -1, -1, -7, -7, -1]
+1: (10) [-1, -7, -1, -1, -1, -1, -1, -1, -1, -1]
+2: (10) [-7, -1, -1, -1, -1, -1, -7, -1, -1, -1]
+3: (10) [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+4: (10) [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+5: (10) [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+6: (10) [-1, -1, -7, -7, -1, -1, -7, -1, -1, -1]
+7: (10) [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+8: (10) [-1, -1, -1, -1, -1, -1, -1, -1, -7, -1]
+9: (10) [-1, -1, -1, -1, -1, -1, -1, -7, -1, -1]</code></pre>
+
+-1이 정상적인 칸, -7이 지뢰 칸이다. <br>
+데이터가 잘 전달 되었다는 것을 볼 수 있다. <br>
+그 다음에는 context-api를 활용해서 화면을 그려 볼 것이다.<br>
+
+#### 3) Table.jsx
+context-api를 적용 해볼 것이다. <br>
+```jsx
+import React, {useContext} from 'react';
+import Tr from './Tr';
+import { TableContext } from './MineSearch';
+const Table = () => {
+  const { tableData } = useContext(TableContext);
+  return (
+    <table>
+      { Array(tableData.length).fill().map((tr, i) => <Tr />) }
+    </table>
+  )
+}
+export default Table;
+```
+
+#### 4) Tr.jsx
+```jsx
+import React, {useContext} from 'react';
+import Td from './Td';
+import { TableContext } from './MineSearch';
+
+const Tr = () => {
+  const { tableData } = useContext(TableContext);
+  return (
+    <tr>
+      { tableData[0] && Array(tableData[0].length).fill().map(() => 
+        <Td />) 
+      }
+      // tableData[0]는 에러 나올 것 같아서 잠깐 보호연산자를 넣어줬다.
+      // 왜냐하면 tableData[0]가 undefined가 나올 수 있기때문이다 
+    </tr>
+  )
+  
+}
+
+export default Tr;
+```
+
+Tr.jsx를 코드 작성하고 에러 없이 잘 작동이 된다. <br>
+`backend.js:6 Warning: Each child in a list should have a unique "key" prop.` <br>
+일단, key와 같은 에러는 일단 생략한다. <br>
+
+이제는 지뢰가 나오도록 설정을 할 것이다. <br>
+지뢰를 나오게 하기 전에 몇번 쨰 줄, 몇번 쨰 칸을 알아 볼려고 한다. <br>
+
+#### 5) Table.jsx
+
+```jsx
+return (
+  <table>
+    // 테이블에서 몇 번쨰 줄의 값 알려준다.
+    { Array(tableData.length).fill().map((tr, i) => <Tr rowIndex={i} />) }
+    // rowIndex 값을 넘겨준다.
+  </table>
+)
+```
+
+#### 6) Tr.jsx
+```jsx
+// 파라미터에서 rowIndex를 받는다.
+const Tr = ({ rowIndex }) => {
+
+  const { tableData } = useContext(TableContext);
+  return (
+    <tr>
+      // Tr에서 몇 번째 칸의 값 알려준다. (추가로, 테이블에 있었던 몇 번 째줄도 같이 값을 넘겨준다)
+      { tableData[0] && Array(tableData[0].length).fill().map(() => 
+      <Td rowIndex={rowIndex} cellIndex={i}/>
+      ) }
+    </tr>
+  )
+}
+```
+여기까지하면 몇번 째 칸, 몇번 째 줄도 알게 된다. td에 rowIndex, cellIndex를 console.log하면된다. <br><br>
+
+
+이제 테이블에 실제 데이터를 넣어볼 것이다. <br>
+(console.log의 데이터가 아니라 화면에 보이도록 할 것이다)<br>
+
+#### 7) Td.jsx
+```jsx
+import React, {useContext} from 'react';
+import { TableContext } from './MineSearch';
+
+const Td = ({rowIndex, cellIndex}) => {
+  // 실제데이터는 useContext로 받는다
+  const { tableData } = useContext(TableContext); // tableData는 useContext의 TableContext의 값을 받는다.
+
+  return (
+    <td>{tableData[rowIndex][cellIndex]}</td> 
+    // 몇번 째 칸, 몇번 째 줄은 부모의 props로부터 받는다.
+    // 그러면 내 데이터가 뭔지 정확하게 구상을 할 수 있다.
+  )
+  
+}
+
+export default Td;
+```
+여기까지하면 화면에 -1, -7이 보일 것이다.<br>
+`<td>{tableData[rowIndex][cellIndex]}</td> `실행을 해준다면 <br>
+데이터뿐만 아니라 현재 보이는 화면에도 값이 보인다. <br>
+(설명어려워서 대충 이렇다는 식으로 이해..)<br>
+
+
+이제는 화면에 -1, -7이 보이는데 좀 화려하게 꾸며볼 것이다. <br>
+#### 8) Td.jsx 
+```jsx
+// getTdText, getTdStyle를 추가한다.
+const getTdStyle = (code) => {};
+const getTdText = (code) => {}
+
+const Td = ({rowIndex, cellIndex}) => {
+  const { tableData } = useContext(TableContext); 
+  return (
+    // 셀의 코드(데이터)의 기반으로 칸을 표시, 스타일을 정할 것이다.
+    // 리액트가 좋은게 데이터에 따라서 알아서 화면을 바꿔준다.
+    <td
+      style={ getTdStyle(tableData[rowIndex][cellIndex]) }
+    > { getTdText(tableData[rowIndex][cellIndex]) } </td> 
+  )  
+}
+
+```
+
+#### 9) Td.jsx
+```jsx
+import { CODE, TableContext } from './MineSearch'; // CODE를 import 잊지말기
+
+const getTdStyle = (code) => {
+  switch (code) {
+    case CODE.NORMAL: // 기본적으로 컴은 칸으로 한다.
+    case CODE.MINE:
+      return {
+        background: '#444',
+      };
+    case CODE.OPENED:
+      return {
+        background: 'white',
+      };
+    default: 
+      return {
+        background: 'white',
+      };
   }
 };
 
-const MineSearch = () => {
-
-  const [state, dispatch] = useReducer(reducer, initalState);
-
-  const value = useMemo(() => {
-    { tableData : state.tableData, dispatch }
-  }, [state.tableData]);
-
-  return (
-    <>
-      <TableContext.Provider value={value}>
-        <Form /> 
-        <div>{state.timer}</div>
-        <Table />
-        <div>{state.result}</div>
-      </TableContext.Provider>
-    </>
-    
-  );
+const getTdText = (code) => {
+  switch (code) {
+    case CODE.NORMAL: // 기본적으로 빈 칸으로 한다.
+      return '';
+    case CODE.MINE: // 일단 디버깅이 편하도록 지뢰 칸을 X로 한다. 나중에 X를 지우면 된다.
+      return 'X';
+    default:
+      return '';
+  }
 };
-
-export default MineSearch;
 ```
 
-#### Form.jsx
-```jsx
-import React, {useState, useCallback, useContext} from 'react';
-import {TableContext, START_GAME} from './MineSearch'
-
-const Form = () => {
-  const [row, setRow] = useState(10); // 세로 - 줄
-  const [cell, setCell] = useState(10); // 가로 -칸
-  const [mine, setMine] = useState(10); // 지뢰
-  const {dispatch} = useContext(TableContext);
-
-  const onChangeRow = useCallback((e) => { // useCallback으로 불필요한 렌더링을 막아준다. 습관을 가지는게 좋다.
-    setRow(e.target.value);
-  }, []);
-  const onChangeCell = useCallback((e) => {
-    setCell(e.target.value);
-  }, []);
-  const onChangeMine = useCallback((e) => {
-    setMine(e.target.value);
-  }, []);
-
-  // 이게 중요하다. 여기에다가 context-api를 적용할 것이다.
-  const onClickBtn = useCallback( () => {
-    dispatch({
-      type: START_GAME, row, cell ,mine // START_GAME을 하는 순간, 여기서 row, cell, mine은 데이터를 넘겨준다.
-    })
-  }, [row, cell ,mine]);
-  
-  return (
-    <div>
-      <input type="number" placeholder="세로" value={row} onChange={onChangeRow} />
-      <input type="number" placeholder="가로" value={cell} onChange={onChangeCell} />
-      <input type="number" placeholder="지뢰" value={mine} onChange={onChangeMine} />
-      <button onClick={onClickBtn}>시작</button>
-    </div>
-  );
-}
-
-export default Form;
-```
-
-* * *
-* * *
