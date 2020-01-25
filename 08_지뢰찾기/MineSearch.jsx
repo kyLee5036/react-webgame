@@ -1,6 +1,29 @@
-import React, {useReducer} from 'react';
+import React, {useReducer, createContext, useMemo} from 'react';
 import Table from './Table';
 import Form from './Form';
+
+// 지뢰 상태를 코드로 만들 것이다.
+export const CODE = {
+  MINE : -7, // 지뢰 칸
+  NORMAL : -1,          // 정상 칸
+  QUESTION : -2,        // 물음 표
+  FALG : -3,            // 깃발
+  QUESTION_MINE : -4,   // 물음표 지뢰
+  FLAG_MINE : -5,       // 깃발 지뢰
+  CLICKED_MINE : -6,    // 클릭 지뢰
+  OPENED : 0,           // 칸을 연칸 : 0 이상이면 전부 OPEND 열리도록 한다. 
+}
+
+export const TableContext = createContext({
+  tableData: [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  dispatch: () => {},
+});
 
 const initalState = {
   tableData: [],
@@ -8,9 +31,17 @@ const initalState = {
   result: '',
 };
 
+export const START_GAME = 'START_GAME'
+
 const reducer = (state, action) => {
   switch (action.type) {
-  
+    case START_GAME: 
+    return { 
+      ...state,
+      tableData : plantMine(action.row, action.cell, action.mine)
+      
+    }
+
     default:
       return state;
   }
@@ -20,15 +51,18 @@ const MineSearch = () => {
 
   const [state, dispatch] = useReducer(reducer, initalState);
 
+  const value = useMemo(() => {
+    { tableData : state.tableData, dispatch }
+  }, [state.tableData]);
+
   return (
     <>
-      <Form /> // Form에다가 dispatch를 넘겨준다.
-      원래였으면 <Form dispatch={dispatch} /> 이였는데, 이번에서 context-api를 사용할 것이다.
-      // context-api를 사용하면 그 아래에 있는 어떠한 컴포넌트 값을 바로 받을 수 있다.
-      // 부모 컴포넌트를 거치지 않고 바로바로 값을 받을 수 있다는 장점이 있다.
-      <div>{state.timer}</div>
-      <Table />
-      <div>{state.result}</div>
+      <TableContext.Provider value={value}>
+        <Form /> 
+        <div>{state.timer}</div>
+        <Table />
+        <div>{state.result}</div>
+      </TableContext.Provider>
     </>
     
   );
