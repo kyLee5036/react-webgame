@@ -7,7 +7,7 @@ export const CODE = {
   MINE : -7, // 지뢰 칸
   NORMAL : -1,          // 정상 칸(닫혀 있는 칸)
   QUESTION : -2,        // 물음 표
-  FALG : -3,            // 깃발
+  FLAG : -3,            // 깃발
   QUESTION_MINE : -4,   // 물음표 지뢰
   FLAG_MINE : -5,       // 깃발 지뢰
   CLICKED_MINE : -6,    // 클릭 지뢰
@@ -16,6 +16,7 @@ export const CODE = {
 
 export const TableContext = createContext({
   tableData: [],
+  halted: true,
   dispatch: () => {},
 });
 
@@ -53,17 +54,82 @@ const initalState = {
   tableData: [],
   timer: 0,
   result: '',
+  halted: true, // halted가 '중단된' 의미..
 };
 
-export const START_GAME = 'START_GAME'
+export const START_GAME = 'START_GAME';
+export const OPEN_CELL = 'OPEN_CELL';
+export const CLICK_MINE = 'CLICK_MINE';
+export const FLAG_CELL = 'FLAG_CELL';
+export const QUESTION_CELL = 'QUESTION_CELL';
+export const NORMALIZE_CELL = 'NORMALIZE_CELL';
+
 
 const reducer = (state, action) => {
   switch (action.type) {
     case START_GAME: 
     return { 
       ...state,
-      tableData : plantMine(action.row, action.cell, action.mine)
-      
+      tableData : plantMine(action.row, action.cell, action.mine),
+      halted: false, // 게임 시작할 때에는 hatled를 false를 해준다.
+    };
+    case OPEN_CELL : {
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      tableData[action.row][action.cell] = CODE.OPENED; 
+      return {
+        ...state,
+        tableData,
+      }
+    }
+    case CLICK_MINE: { // 지뢰를 클릭할 경우 게임오버하기위해서 halted를 한다.
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      tableData[action.row][action.cell] = CODE.CLICKED_MINE; 
+      return {
+        ...state,
+        tableData,
+        halted: true, // 게임을 멈추기 위해서 추가하였다. 
+      }
+    }
+    case FLAG_CELL: {
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      if (tableData[action.row][action.cell] === CODE.MINE) { 
+        tableData[action.row][action.cell] = CODE.FLAG_MINE; 
+      } else {
+        tableData[action.row][action.cell] = CODE.FLAG; 
+      }
+      return {
+        ...state,
+        tableData,
+      }
+    }
+    case QUESTION_CELL: {
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      if (tableData[action.row][action.cell] === CODE.FLAG_MINE) {
+        tableData[action.row][action.cell] = CODE.QUESTION_MINE;
+      } else {
+        tableData[action.row][action.cell] = CODE.QUESTION;
+      }
+      return {
+        ...state,
+        tableData,
+      };
+    }
+    case NORMALIZE_CELL: {
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      if (tableData[action.row][action.cell] === CODE.QUESTION_MINE) { 
+        tableData[action.row][action.cell] = CODE.MINE; 
+      } else {
+        tableData[action.row][action.cell] = CODE.NORMAL; 
+      }
+      return {
+        ...state,
+        tableData,
+      }
     }
 
     default:
@@ -74,18 +140,20 @@ const reducer = (state, action) => {
 const MineSearch = () => {
 
   const [state, dispatch] = useReducer(reducer, initalState);
+  const { tableData, halted, timer, result } = state;
 
   const value = useMemo(() => (
-    { tableData : state.tableData, dispatch }
-  ), [state.tableData]);
+    { tableData, halted, dispatch }
+  ), [tableData, halted]);
+
 
   return (
     <>
       <TableContext.Provider value={value}>
         <Form /> 
-        <div>{state.timer}</div>
+        <div>{timer}</div>
         <Table />
-        <div>{state.result}</div>
+        <div>{result}</div>
       </TableContext.Provider>
     </>
     

@@ -1,6 +1,6 @@
 + [createContexnt와 Provider](#createContexnt와-Provider)
 + [useContext 사용해 지뢰 칸 렌더링](#useContext-사용해-지뢰-칸-렌더링)
-
++ [왼쪽 오른쪽 클릭 로직 작성하기](#왼쪽-오른쪽-클릭-로직-작성하기)
 
 ## createContexnt와 Provider
 #### MineSearch.jsx
@@ -14,7 +14,7 @@ export const CODE = {
   MINE : -7, // 지뢰 칸
   NORMAL : -1,          // 정상 칸
   QUESTION : -2,        // 물음 표
-  FALG : -3,            // 깃발
+  FLAG : -3,            // 깃발
   QUESTION_MINE : -4,   // 물음표 지뢰
   FLAG_MINE : -5,       // 깃발 지뢰
   CLICKED_MINE : -6,    // 클릭 지뢰
@@ -134,7 +134,7 @@ export const CODE = {
   MINE : -7, // 지뢰 칸
   NORMAL : -1,          // 정상 칸(닫혀 있는 칸)
   QUESTION : -2,        // 물음 표
-  FALG : -3,            // 깃발
+  FLAG : -3,            // 깃발
   QUESTION_MINE : -4,   // 물음표 지뢰
   FLAG_MINE : -5,       // 깃발 지뢰
   CLICKED_MINE : -6,    // 클릭 지뢰
@@ -309,3 +309,288 @@ const Td = ({rowIndex, cellIndex}) => {
 
 export default Td;
 ```
+
+## 왼쪽 오른쪽 클릭 로직 작성하기
+
+#### MineSearch.jsx
+```jsx
+import React, {useReducer, createContext, useMemo} from 'react';
+import Table from './Table';
+import Form from './Form';
+
+// 지뢰 상태를 코드로 만들 것이다.
+export const CODE = {
+  MINE : -7, // 지뢰 칸
+  NORMAL : -1,          // 정상 칸(닫혀 있는 칸)
+  QUESTION : -2,        // 물음 표
+  FLAG : -3,            // 깃발
+  QUESTION_MINE : -4,   // 물음표 지뢰
+  FLAG_MINE : -5,       // 깃발 지뢰
+  CLICKED_MINE : -6,    // 클릭 지뢰
+  OPENED : 0,           // 칸을 연칸 : 0 이상이면 전부 OPEND 열리도록 한다. 
+}
+
+export const TableContext = createContext({
+  tableData: [],
+  halted: true,
+  dispatch: () => {},
+});
+
+// 지뢰를 심는 함수
+const plantMine = (row, cell, mine) => {
+  console.log(row, cell, mine);
+  const candiate = Array(row*cell).fill().map((arr, i) => { // 0 ~ 99 칸
+    return i;
+  });
+  const shuffle = [];
+  while ( candiate.length > row * cell - mine ) { 
+    const chosen = candiate.splice(Math.floor(Math.random() * candiate.length), 1)[0]; 
+    shuffle.push(chosen);
+  }
+  const data = []; 
+  for ( let i = 0; i < row; i ++ ) { // 테이블 데이터을 구현
+    const rowData = [];
+    data.push(rowData);
+    for ( let j = 0; j < cell; j ++ ) {
+      rowData.push(CODE.NORMAL);
+    }
+  }
+
+  for ( let k = 0; k < shuffle.length; k++ ) { // 칸 위치 찾기
+    const ver = Math.floor(shuffle[k] / cell ); 
+    const hor = shuffle[k] % cell;
+    data[ver][hor] = CODE.MINE;
+  }
+
+  console.log(data);
+  return data; // tableData에 지뢰를 심는다
+};
+
+const initalState = {
+  tableData: [],
+  timer: 0,
+  result: '',
+  halted: true, // halted가 '중단된' 의미..
+};
+
+export const START_GAME = 'START_GAME';
+export const OPEN_CELL = 'OPEN_CELL';
+export const CLICK_MINE = 'CLICK_MINE';
+export const FLAG_CELL = 'FLAG_CELL';
+export const QUESTION_CELL = 'QUESTION_CELL';
+export const NORMALIZE_CELL = 'NORMALIZE_CELL';
+
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case START_GAME: 
+    return { 
+      ...state,
+      tableData : plantMine(action.row, action.cell, action.mine),
+      halted: false, // 게임 시작할 때에는 hatled를 false를 해준다.
+    };
+    case OPEN_CELL : {
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      tableData[action.row][action.cell] = CODE.OPENED; 
+      return {
+        ...state,
+        tableData,
+      }
+    }
+    case CLICK_MINE: { // 지뢰를 클릭할 경우 게임오버하기위해서 halted를 한다.
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      tableData[action.row][action.cell] = CODE.CLICKED_MINE; 
+      return {
+        ...state,
+        tableData,
+        halted: true, // 게임을 멈추기 위해서 추가하였다. 
+      }
+    }
+    case FLAG_CELL: {
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      if (tableData[action.row][action.cell] === CODE.MINE) { 
+        tableData[action.row][action.cell] = CODE.FLAG_MINE; 
+      } else {
+        tableData[action.row][action.cell] = CODE.FLAG; 
+      }
+      return {
+        ...state,
+        tableData,
+      }
+    }
+    case QUESTION_CELL: {
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      if (tableData[action.row][action.cell] === CODE.FLAG_MINE) {
+        tableData[action.row][action.cell] = CODE.QUESTION_MINE;
+      } else {
+        tableData[action.row][action.cell] = CODE.QUESTION;
+      }
+      return {
+        ...state,
+        tableData,
+      };
+    }
+    case NORMALIZE_CELL: {
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      if (tableData[action.row][action.cell] === CODE.QUESTION_MINE) { 
+        tableData[action.row][action.cell] = CODE.MINE; 
+      } else {
+        tableData[action.row][action.cell] = CODE.NORMAL; 
+      }
+      return {
+        ...state,
+        tableData,
+      }
+    }
+
+    default:
+      return state;
+  }
+};
+
+const MineSearch = () => {
+
+  const [state, dispatch] = useReducer(reducer, initalState);
+  const { tableData, halted, timer, result } = state;
+
+  const value = useMemo(() => (
+    { tableData, halted, dispatch }
+  ), [tableData, halted]);
+
+
+  return (
+    <>
+      <TableContext.Provider value={value}>
+        <Form /> 
+        <div>{timer}</div>
+        <Table />
+        <div>{result}</div>
+      </TableContext.Provider>
+    </>
+    
+  );
+};
+
+export default MineSearch;
+```
+
+
+#### Td.jsx
+```jsx
+import React, {useContext, useCallback} from 'react';
+import { CODE, TableContext, OPEN_CELL, CLICK_MINE, FLAG_CELL, QUESTION_CELL, NORMALIZE_CELL } from './MineSearch';
+
+
+const getTdStyle = (code) => {
+  switch (code) {
+    case CODE.NORMAL: // 기본적으로 컴은 칸으로 한다.
+    case CODE.MINE:
+      return {
+        background: '#444', // 회색
+      };
+    case CODE.CLICKED_MINE:
+    case CODE.OPENED:
+      return {
+        background: 'white',
+      };
+    case CODE.QUESTION_MINE:
+    case CODE.QUESTION:
+      return {
+        background: 'yellow',
+      }
+      case CODE.FLAG_MINE:
+      case CODE.FLAG:
+        return {
+          background: 'red',
+        };
+    default: 
+      return {
+        background: 'white',
+      };
+  }
+};
+
+const getTdText = (code) => {
+  switch (code) {
+    case CODE.NORMAL: // 기본적으로 빈 칸으로 한다.
+      return '';
+    case CODE.MINE: // 일단 디버깅이 편하도록 지뢰 칸을 X로 한다. 나중에 X를 지우면 된다.
+      return 'X';
+    case CODE.CLICKED_MINE: 
+      return '뻥';
+    case CODE.FLAG_MINE:
+    case CODE.FLAG:
+      return '!';
+    case CODE.QUESTION:
+    case CODE.QUESTION_MINE:
+      return '?'
+    default:
+      return '';
+  }
+};
+
+const Td = ({rowIndex, cellIndex}) => {
+  const { tableData, dispatch, halted } = useContext(TableContext);
+  const onClickTd = useCallback(() => {
+    if (halted) {
+      return;
+    }
+    switch (tableData[rowIndex][cellIndex]) { 
+      case CODE.OPENED:     
+      case CODE.FLAG_MINE:
+      case CODE.FLAG:
+      case CODE.QUESTION_MINE:
+      case CODE.QUESTION:
+        return;
+      case CODE.NORMAL: // 일반 칸 클릭 했을 때 
+        dispatch({ type: OPEN_CELL, row: rowIndex, cell: cellIndex});
+        return;
+      case CODE.MINE: // 지뢰클릭 했을 때 뻥 터지게 한다.
+        dispatch({type : CLICK_MINE, row: rowIndex, cell: cellIndex})
+    
+      default:
+        return;
+    }
+  }, [tableData[rowIndex][cellIndex], halted] ); 
+
+  const onRightClickTd = useCallback((e) => {
+    e.preventDefault(); // 해주는 이유가 오른쪽 클릭하면 창을 안 나오기 위해서이다.
+    if (halted) {
+      return;
+    }
+    switch (tableData[rowIndex][cellIndex]) {
+      case CODE.NORMAL:
+      case CODE.MINE: // 지뢰, 보통칸 클릭햇을 때에는 깃발로
+        dispatch({ type : FLAG_CELL, row: rowIndex, cell: cellIndex});
+        return; // return이든 break이든 끊어줘야 함
+      case CODE.FLAG_MINE:
+      case CODE.FLAG: // 깃발( 보통, 지뢰)을 클릭했을 때에는 물음표로
+        dispatch({ type: QUESTION_CELL, row: rowIndex, cell: cellIndex });
+        return; // return이든 break이든 끊어줘야 함
+      case CODE.QUESTION:
+      case CODE.QUESTION_MINE: // 물음표( 보통, 지뢰)을 클릭했을 때에는 물음표로
+        dispatch({ type: NORMALIZE_CELL, row: rowIndex, cell: cellIndex});
+        return; // return이든 break이든 끊어줘야 함
+      default:
+        return; // return이든 break이든 끊어줘야 함
+    }
+  }, [tableData[rowIndex][cellIndex], halted]);
+
+  return (
+    <td
+      style={ getTdStyle(tableData[rowIndex][cellIndex]) }
+      onClick={onClickTd}
+      onContextMenu={onRightClickTd}
+    > { getTdText(tableData[rowIndex][cellIndex]) } </td> 
+  )
+  
+}
+
+export default Td;
+```
+

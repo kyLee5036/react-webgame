@@ -3,6 +3,7 @@
 + [Context API 소개와 지뢰찾기](#Context-API-소개와-지뢰찾기)
 + [createContexnt와 Provider](#createContexnt와-Provider)
 + [useContext 사용해 지뢰 칸 렌더링](#useContext-사용해-지뢰-칸-렌더링)
++ [왼쪽 오른쪽 클릭 로직 작성하기](#왼쪽-오른쪽-클릭-로직-작성하기)
 
 
 시작하기 전에
@@ -338,7 +339,7 @@ export const CODE = {
   MINE : -7, // 지뢰 칸
   NORMAL : -1,          // 정상 칸(닫혀 있는 칸)
   QUESTION : -2,        // 물음 표
-  FALG : -3,            // 깃발
+  FLAG : -3,            // 깃발
   QUESTION_MINE : -4,   // 물음표 지뢰
   FLAG_MINE : -5,       // 깃발 지뢰
   CLICKED_MINE : -6,    // 클릭 지뢰
@@ -541,7 +542,7 @@ const getTdStyle = (code) => {
     case CODE.NORMAL: // 기본적으로 컴은 칸으로 한다.
     case CODE.MINE:
       return {
-        background: '#444',
+        background: '#444', // 회색
       };
     case CODE.OPENED:
       return {
@@ -566,3 +567,379 @@ const getTdText = (code) => {
 };
 ```
 
+## 왼쪽 오른쪽 클릭 로직 작성하기
+
+일단 클릭했을 때 셀을 여는것부터 하겠다.
+
+
+#### 1) MineSearch.jsx
+```jsx
+...위 생략
+export const OPEN_CELL = 'OPEN_CELL'
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case START_GAME: 
+    return { 
+      ...state,
+      tableData : plantMine(action.row, action.cell, action.mine)
+    };
+    case OPEN_CELL : // OPEN_CELL 을 td에서 dispatch를 해준다.
+      // 칸을 클릭하는데 클릭한 칸을 opend로 바꿔준다.
+      // 불면성을 유지하기 위해서 밑 코드를 작성한다.
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]]; 
+      // action.row, action.cell은 td에서 값을 받아온다.
+      tableData[action.row][action.cell] = CODE.OPENED; 
+
+      return {
+        ...state,
+        tableData,
+      }
+
+    default:
+      return state;
+  }
+};
+...이하 생략
+```
+
+#### 2) Td.jsx
+```jsx
+...위 생략
+const Td = ({rowIndex, cellIndex}) => {
+  const { tableData, dispatch } = useContext(TableContext); // dispatch를 추가해준다.
+
+  const onClickTd = useCallback(() => {
+    dispatch({ type: OPEN_CELL, row: rowIndex, cell: cellIndex})
+  }, []);
+
+  return (
+    <td
+      style={ getTdStyle(tableData[rowIndex][cellIndex]) }
+      onClick={onClickTd}
+    > { getTdText(tableData[rowIndex][cellIndex]) } </td> 
+  )
+  
+}
+...이하 생략
+```
+
+여기까지 코드 작성하면 클릭하는 순간 클릭한 td는 흰색으로 변해서 보인다. <br>
+
+지금 문제는 지뢰클릭해도 바꾸는데 나중에 구현하겠다. <br>
+
+#### 3) Td.jsx
+
+```jsx
+
+const getTdText = (code) => {
+  switch (code) {
+    ...생략
+    case CODE.CLICKED_MINE: 
+      return '뻥';
+    ...생략
+  }
+};
+
+const Td = ({rowIndex, cellIndex}) => {
+  const { tableData, dispatch } = useContext(TableContext); 
+
+  const onClickTd = useCallback(() => {
+    // 칸 상태별로 클릭했을 때 동작이 다르도록 switch문으로 구별해준다. 
+    switch (tableData[rowIndex][cellIndex]) { 
+      // 이미 연 칸, 깃발(보통, 지뢰), 물음표(보통, 지뢰) 5개는 클릭해도 아무것도 안되게 한다.
+      case CODE.OPENED:     
+      case CODE.FLAG_MINE:
+      case CODE.FLAG:
+      case CODE.QUESTION_MINE:
+      case CODE.QUESTION:
+        return;
+      case CODE.NORMAL: // 일반 칸 클릭 했을 때 
+        dispatch({ type: OPEN_CELL, row: rowIndex, cell: cellIndex});
+        return;
+      case CODE.MINE: // 지뢰클릭 했을 때 뻥 터지게 한다.
+        dispatch({type : CLICK_MINE, row: rowIndex, cell: cellIndex})
+    
+      default:
+        break;
+    }
+    
+  }, [tableData[rowIndex][cellIndex]]); // 배열은 바뀌는 값을 넣어준다. 잊지말기!
+...이하 생략
+```
+계속 이어서..
+
+#### 4) Td.jsx
+```jsx
+const getTdStyle = (code) => {
+  switch (code) {
+    case CODE.NORMAL: // 기본적으로 컴은 칸으로 한다.
+    case CODE.MINE:
+      return {
+        background: '#444', // 회색
+      };
+    case CODE.CLICKED_MINE:
+    case CODE.OPENED:
+      return {
+        background: 'white',
+      };
+    case CODE.QUESTION_MINE:
+    case CODE.QUESTION:
+      return {
+        background: 'yellow',
+      }
+    case CODE.FLAG_MINE:
+    case CODE.FLAG:
+      return {
+        background: 'red',
+      }
+    default: 
+      return {
+        background: 'white',
+      };
+  }
+};
+
+const getTdText = (code) => {
+  switch (code) {
+    case CODE.NORMAL: // 기본적으로 빈 칸으로 한다.
+      return '';
+    case CODE.MINE: // 일단 디버깅이 편하도록 지뢰 칸을 X로 한다. 나중에 X를 지우면 된다.
+      return 'X';
+    case CODE.CLICKED_MINE: 
+      return '뻥';
+    case CODE.FLAG_MINE:
+    case CODE.FLAG:
+      return '!';
+    case CODE.QUESTION:
+    case CODE.QUESTION_MINE:
+      return '?'
+    default:
+      return '';
+  }
+};
+```
+위 내용을 추가해준다. <br>
+
+여기서부터 마우스 이벤트를 추가하겠다. (왼쪽 클릭(onClick), 오른쪽 클릭(onContextMenu)) <br>
+
+#### 5) Td.jsx
+```jsx
+const onRightClickTd = useCallback((e) => {
+    e.preventDefault(); // 해주는 이유가 오른쪽 클릭하면 창을 안 나오기 위해서이다.
+    switch (tableData[rowIndex][cellIndex]) {
+      case CODE.NORMAL:
+      case CODE.MINE: // 지뢰, 보통칸 클릭햇을 때에는 깃발로
+        dispatch({ type : FLAG_CELL, row: rowIndex, cell: cellIndex});
+        return; // return이든 break이든 끊어줘야 함
+      case CODE.FLAG_MINE:
+      case CODE.FLAG: // 깃발( 보통, 지뢰)을 클릭했을 때에는 물음표로
+        dispatch({ type : QUESTION_CELL, row: rowIndex, cell: cellIndex});
+        return; // return이든 break이든 끊어줘야 함
+      case CODE.QUESTION:
+      case CODE.QUESTION_MINE: // 물음표( 보통, 지뢰)을 클릭했을 때에는 물음표로
+        dispatch({ type: NORMALIZE_CELL, row: rowIndex, cell: cellIndex});
+        return; // return이든 break이든 끊어줘야 함
+      default:
+        return; // return이든 break이든 끊어줘야 함
+    }
+  }, [tableData[rowIndex][cellIndex]] );
+```
+
+여기까지 dispatch의 type을 5개 만들었으니까 reducer에서 코드 작성을 해주면 된다. <br>
+
+TIP ) action을 (dispatch의 type)을 추상적으로 만들고, 구현은 나중에 하는 것도 좋다. <br>
+
+여기서 지뢰를 클릭하면 중단되도록 halted를 추가한다. <br>
+#### 6) MineSearch.jsx
+```jsx
+const initalState = {
+  tableData: [],
+  timer: 0,
+  result: '',
+  halted: false, // halted가 '중단된' 의미..
+};
+
+... 위 생략
+const reducer = (state, action) => {
+  switch (action.type) {
+    case START_GAME: 
+    return { 
+      ...state,
+      tableData : plantMine(action.row, action.cell, action.mine),
+      halted: false, // 게임 시작할 때에는 hatled를 false를 해준다.
+    };
+    ...생략
+    case CLICK_MINE: {// 지뢰를 클릭할 경우 게임오버하기위해서 halted를 한다.
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      tableData[action.row][action.cell] = CODE.CLICKED_MINE; 
+      return {
+        ...state,
+        tableData,
+        halted: true, // 게임을 멈추기 위해서 추가하였다. 
+      }
+    }
+  ...이하 생략
+```
+
+#### 7) MineSearch.jsx
+
+아까 Td.jsx(5번)을 구현하였다.
+
+```jsx
+export const START_GAME = 'START_GAME';
+export const OPEN_CELL = 'OPEN_CELL';
+export const CLICK_MINE = 'CLICK_MINE';
+export const FLAG_CELL = 'FLAG_CELL';
+export const QUESTION_CELL = 'QUESTION_CELL';
+export const NORMALIZE_CELL = 'NORMALIZE_CELL';
+
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case START_GAME: 
+    return { 
+      ...state,
+      tableData : plantMine(action.row, action.cell, action.mine),
+      halted: false, // 게임 시작할 때에는 hatled를 false를 해준다.
+    };
+    case OPEN_CELL : {// OPEN_CELL 을 td에서 dispatch를 해준다.
+      // 칸을 클릭하는데 클릭한 칸을 opend로 바꿔준다.
+      // 불면성을 유지하기 위해서 밑 코드를 작성한다.
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      tableData[action.row][action.cell] = CODE.OPENED; 
+      return {
+        ...state,
+        tableData,
+      }
+    }
+    case CLICK_MINE: {// 지뢰를 클릭할 경우 게임오버하기위해서 halted를 한다.
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      tableData[action.row][action.cell] = CODE.CLICKED_MINE; 
+      return {
+        ...state,
+        tableData,
+        halted: true, // 게임을 멈추기 위해서 추가하였다. 
+      }
+    }
+    case FLAG_CELL: {
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      // 일반 칸에서 지뢰가 있을 경우, 없을 경우 (보여주는 화면은 똑같지만, 데이터가 다르다는 것을 잊지말기)
+      if (tableData[action.row][action.cell] === CODE.MINE) { 
+        tableData[action.row][action.cell] = CODE.FLAG_MINE; 
+      } else {
+        tableData[action.row][action.cell] = CODE.FLAG; 
+      }
+      return {
+        ...state,
+        tableData,
+      }
+    }
+    case QUESTION_CELL: {
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      // 깃발 중에서도 지뢰가 있을 경우, 없을 경우  (보여주는 화면은 똑같지만, 데이터가 다르다는 것을 잊지말기) 
+      if (tableData[action.row][action.cell] === CODE.FLAG_MINE) { 
+        tableData[action.row][action.cell] = CODE.QUESTION_MINE; 
+      } else {
+        tableData[action.row][action.cell] = CODE.QUESTION; 
+      }
+      return {
+        ...state,
+        tableData,
+      }
+    }
+    case NORMALIZE_CELL: {
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      // 물음표 중에서도 지뢰가 있을 경우, 없을 경우  (보여주는 화면은 똑같지만, 데이터가 다르다는 것을 잊지말기)
+      if (tableData[action.row][action.cell] === CODE.QUESTION_MINE) { 
+        tableData[action.row][action.cell] = CODE.MINE; 
+      } else {
+        tableData[action.row][action.cell] = CODE.NORMAL; 
+      }
+      return {
+        ...state,
+        tableData,
+      }
+    }
+
+    default:
+      return state;
+  }
+};
+```
+
+여기서 잠깐 halted를 수정하겠다.
+
+#### 8) MineSearch.jsx
+```jsx
+export const TableContext = createContext({
+  tableData: [],
+  halted: true, // context-api에 halted를 추가해주고 true로 바꿔준다.
+  dispatch: () => {},
+});
+const initalState = {
+  tableData: [],
+  timer: 0,
+  result: '',
+  halted: true, // halted가 '중단된' 의미.., halted를 true로 바꿔준다.
+};
+
+...위 생략
+
+const MineSearch = () => {
+const {tableData, halted, timer, result} = state;
+
+  const value = useMemo(() => (
+    { tableData : tableData, dispatch, halted: halted }
+  ), [tableData, halted]);
+};
+```
+Context-api에 halted를 추가시켜서 value에도 halted를 넣어주었다.
+
+#### 9) Td.jsx
+```jsx
+const Td = ({rowIndex, cellIndex}) => {
+  const { tableData, dispatch, halted } = useContext(TableContext); // useContext에 halted를 넣어준다.
+  console.log(halted);
+  const onClickTd = useCallback(() => {
+    if (halted) { // hatlted가 true가 되면 게임 중단 시켜준다. 
+    // true가 되면 이쪽으로 넘어온다
+      return;
+    }
+    switch (tableData[rowIndex][cellIndex]) { 
+      ...생략
+    }
+  }, [tableData[rowIndex][cellIndex]], halted ); 
+  // 셀을 클릭하면 halted도 true가 false 자꾸 판단해야하기 떄문에 배열에도 추가해준다.
+
+  const onRightClickTd = useCallback((e) => {
+    e.preventDefault(); // 해주는 이유가 오른쪽 클릭하면 창을 안 나오기 위해서이다.
+    if (halted) { // hatlted가 true가 되면 게임 중단 시켜준다.
+      return;
+    }
+    switch (tableData[rowIndex][cellIndex]) {
+      ...생략
+    }
+  }, [tableData[rowIndex][cellIndex]], halted );
+  // 셀을 클릭하면 halted도 true가 false 자꾸 판단해야하기 떄문에 배열에도 추가해준다.
+
+```
+여기까지 따라했는데 오류가 나온다 <br>
+
+중단 오류는 <br>
+바꾸기 전 (onClickTd, onRightClickTd) 둘 다 적용 <br>
+`}, [tableData[rowIndex][cellIndex]], halted );` <br>
+바꾸기 후 (onClickTd, onRightClickTd) 둘 다 적용 <br>
+`}, [tableData[rowIndex][cellIndex], halted] );` <br>
+
+오른쪽 클릭 에러<br>
+오류 내용 : 일반 칸에는 흰색, 지뢰 칸에는 빨간색이다. <br>
+MineSearch, Td의 FALG철자가 틀려서 FLAG의 관련된 철자를 전부 FLAG로 바꾸어 주었다. <br>
+통일성의 문제가 있었다.  <br>
