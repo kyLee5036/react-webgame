@@ -71,18 +71,43 @@ const reducer = (state, action) => {
     return { 
       ...state,
       tableData : plantMine(action.row, action.cell, action.mine),
-      halted: false, // 게임 시작할 때에는 hatled를 false를 해준다.
+      halted: false, 
     };
     case OPEN_CELL : {
       const tableData = [...state.tableData];
       tableData[action.row] = [...state.tableData[action.row]];
-      tableData[action.row][action.cell] = CODE.OPENED; 
+      let around = [];
+      if ( tableData[action.row - 1] ) {
+        around = around.concat( 
+          tableData[action.row - 1][action.cell -1], 
+          tableData[action.row - 1][action.cell],
+          tableData[action.row - 1][action.cell + 1],
+        );
+      }
+      around = around.concat(
+        tableData[action.row][action.cell - 1],
+        tableData[action.row][action.cell + 1],
+      );
+      if ( tableData[action.row + 1] ) {
+        around = around.concat(
+          tableData[action.row + 1][action.cell -1], 
+          tableData[action.row + 1][action.cell],
+          tableData[action.row + 1][action.cell + 1],
+        );
+      }
+
+      const count = around.filter( (v) => 
+        [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE]
+        .includes(v)).length;
+      console.log(around, count);
+      tableData[action.row][action.cell] = count; 
+
       return {
         ...state,
         tableData,
       }
     }
-    case CLICK_MINE: { // 지뢰를 클릭할 경우 게임오버하기위해서 halted를 한다.
+    case CLICK_MINE: { 
       const tableData = [...state.tableData];
       tableData[action.row] = [...state.tableData[action.row]];
       tableData[action.row][action.cell] = CODE.CLICKED_MINE; 

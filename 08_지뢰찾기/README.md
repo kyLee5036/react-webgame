@@ -4,6 +4,7 @@
 + [createContexnt와 Provider](#createContexnt와-Provider)
 + [useContext 사용해 지뢰 칸 렌더링](#useContext-사용해-지뢰-칸-렌더링)
 + [왼쪽 오른쪽 클릭 로직 작성하기](#왼쪽-오른쪽-클릭-로직-작성하기)
++ [지뢰 개수 표시하기](#지뢰-개수-표시하기)
 
 
 시작하기 전에
@@ -941,5 +942,201 @@ const Td = ({rowIndex, cellIndex}) => {
 
 오른쪽 클릭 에러<br>
 오류 내용 : 일반 칸에는 흰색, 지뢰 칸에는 빨간색이다. <br>
-MineSearch, Td의 FALG철자가 틀려서 FLAG의 관련된 철자를 전부 FLAG로 바꾸어 주었다. <br>
+MineSearch, Td의 FALG철자가 틀려서 FALG의 관련된 철자를 전부 FLAG로 바꾸어 주었다. <br>
 통일성의 문제가 있었다.  <br>
+
+
+## 지뢰 개수 표시하기
+
+칸을 여는데 빈 칸을 눌렀을 때 주변에 지뢰를 몇 개인지 알려준다. <br>
+빈 칸들만 여러개 열었는데 주변 칸이 한 방에 열리도록 (재귀함수 사용) - 다음 강의에서<br>
+
+
+#### 1) MineSearch.jsx 
+
+내 기준으로 주변 칸 검사를 한다. <br>
+윗 줄, 아랫 줄은 조심해서 해야한다. <br>
+
+```jsx
+const reducer = (state, action) => {
+  switch (action.type) {
+    case START_GAME: 
+    return { 
+      ...state,
+      tableData : plantMine(action.row, action.cell, action.mine),
+      halted: false, 
+    };
+    case OPEN_CELL : {
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      tableData[action.row][action.cell] = CODE.OPENED; 
+      // 내가 누른 칸이 있으면 주위 8칸을 검사한다.
+      // 끝 부분 클릭할 때에는 8칸이 아니라 5칸이다 (없는 칸이 있다. 잘 따지고 들어가야한다.)
+      let around = [];
+      // 윗줄이 빈 칸일 경우
+      if ( tableData[action.row - 1] ) {
+        // 윗 줄 3칸을 넣어준다.
+        around.concat(
+          tableData[action.row - 1][action.cell -1], 
+          tableData[action.row - 1][action.cell],
+          tableData[action.row - 1][action.cell + 1],
+        );
+      }
+      // 내 기준 왼쪽 칸, 오른 쪽 칸을 넣어준다.
+      around.concat(
+        tableData[action.row][action.cell - 1],
+        tableData[action.row][action.cell + 1],
+      );
+      // 아래 줄이 빈 칸일 경우
+      if ( tableData[action.row + 1] ) {
+        // 윗 줄 3칸을 넣어준다.
+        around.concat(
+          tableData[action.row + 1][action.cell -1], 
+          tableData[action.row + 1][action.cell],
+          tableData[action.row + 1][action.cell + 1],
+        );
+      } 
+      // 그러면 5칸 또는 8칸을 검사하게 된다.
+
+      return {
+        ...state,
+        tableData,
+      }
+    }
+    ... 생략
+```
+
+
+
+#### 2) MineSearch.jsx
+
+지뢰의 주변 갯수를 세아린다.
+
+```jsx
+const reducer = (state, action) => {
+  switch (action.type) {
+    case START_GAME: 
+    return { 
+      ...state,
+      tableData : plantMine(action.row, action.cell, action.mine),
+      halted: false, /
+    };
+    case OPEN_CELL : {
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      let around = [];
+      if ( tableData[action.row - 1] ) {
+        around.concat(
+          tableData[action.row - 1][action.cell -1], 
+          tableData[action.row - 1][action.cell],
+          tableData[action.row - 1][action.cell + 1],
+        );
+      }
+      around.concat(
+        tableData[action.row][action.cell - 1],
+        tableData[action.row][action.cell + 1],
+      );
+      if ( tableData[action.row + 1] ) {
+        around.concat(
+          tableData[action.row + 1][action.cell -1], 
+          tableData[action.row + 1][action.cell],
+          tableData[action.row + 1][action.cell + 1],
+        );
+      } 
+      // 주변에 지뢰를 찾아서 갯수를 검사한다.
+      const count = around.filter((v) => [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE].includes(v));
+      // 갯수를 세고 나서는
+      tableData[action.row][action.cell] = count; // 갯수가 표시가 될 것이다.
+
+      return {
+        ...state,
+        tableData,
+      }
+      ...생략
+```
+
+하지만, 문제가 있어서 에러가 있다. 에러를 해결하겠다.<br>
+`console.log(count);` 하면 빈 배열이 나온다.<br>
+
+
+#### 3) MineSearch.jsx
+```jsx
+const reducer = (state, action) => {
+  switch (action.type) {
+    case START_GAME: 
+    return { 
+      ...state,
+      tableData : plantMine(action.row, action.cell, action.mine),
+      halted: false, 
+    };
+    case OPEN_CELL : {
+      const tableData = [...state.tableData];
+      tableData[action.row] = [...state.tableData[action.row]];
+      let around = [];
+      if ( tableData[action.row - 1] ) {
+        around = around.concat(
+          tableData[action.row - 1][action.cell -1], 
+          tableData[action.row - 1][action.cell],
+          tableData[action.row - 1][action.cell + 1],
+        );
+      }
+      around = around.concat(
+        tableData[action.row][action.cell - 1],
+        tableData[action.row][action.cell + 1],
+      );
+      if ( tableData[action.row + 1] ) {
+        around = around.concat(
+          tableData[action.row + 1][action.cell -1], 
+          tableData[action.row + 1][action.cell],
+          tableData[action.row + 1][action.cell + 1],
+        );
+      } 
+      const count = around.filter((v) => [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE].includes(v)).length;
+      console.log(around, count); // 확인하면서 코딩하기!!
+      tableData[action.row][action.cell] = count; 
+
+      return {
+        ...state,
+        tableData,
+      }
+```
+concat에 around를 추가해주었다.  <br>
+소스 코드 <br>
+`const count = around.filter((v) => [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE].includes(v)).length;` 로 바꿈. <br>
+(뒤에 갯수를 알기위해서 length를 추가해주어야 한다.) <br>
+
+하지만, 화면에 갯수도 나오지가 않는다. 화면에 나오도록 할 것이다. <br>
+화면에 텍스트 나오기 위해서는 (getTdText) 유심히 보기 (혼자 해보기!!!!)<br>
+
+#### 4) Td.jsx
+```jsx
+const getTdText = (code) => {
+  switch (code) {
+    case CODE.NORMAL: // 기본적으로 빈 칸으로 한다.
+      return '';
+    case CODE.MINE: // 일단 디버깅이 편하도록 지뢰 칸을 X로 한다. 나중에 X를 지우면 된다.
+      return 'X';
+    case CODE.CLICKED_MINE: 
+      return '뻥';
+    case CODE.FLAG_MINE:
+    case CODE.FLAG:
+      return '!';
+    case CODE.QUESTION:
+    case CODE.QUESTION_MINE:
+      return '?'
+    default:
+      return code || ''; 
+      // 기본 값은 code(갯수)를 나오게하고 (또는) 0일 나올경우에는 ''(빈 칸)으로 해주었다.
+  }
+};
+```
+화면에 텍스트가 나오지 않았으니까 텍스트 쪽을(getTdText) 유심히 본다. <br>
+
+여기서부터 칸을 열었을 때 한꺼번에 여는게 어렵다. <br>
+자바스크립트랑 리액트 구현방식이 다르다. <br>
+리액트에서는 엄청난 렌더링이 발생하기 때문에 기존 방식이랑 많이 다르다. <br>
+그래서, OPEN_CELL에서부터 확인을 해야한다. 물론 재귀함수를 써야하긴 해야한다. <br>
+
+다음강의부터 한다.
+
+
