@@ -5,7 +5,7 @@
 + [useContext 사용해 지뢰 칸 렌더링](#useContext-사용해-지뢰-칸-렌더링)
 + [왼쪽 오른쪽 클릭 로직 작성하기](#왼쪽-오른쪽-클릭-로직-작성하기)
 + [지뢰 개수 표시하기](#지뢰-개수-표시하기)
-
++ [빈 칸들 한 번에 열기](#빈-칸들-한-번에-열기)
 
 시작하기 전에
 #### index.html
@@ -1137,6 +1137,738 @@ const getTdText = (code) => {
 리액트에서는 엄청난 렌더링이 발생하기 때문에 기존 방식이랑 많이 다르다. <br>
 그래서, OPEN_CELL에서부터 확인을 해야한다. 물론 재귀함수를 써야하긴 해야한다. <br>
 
-다음강의부터 한다.
+다음강의부터 한다.<br>
 
 
+
+## 빈 칸들 한 번에 열기
+
+코드로 설명하겠다. <br>
+그리고 OPEN_CELL 밖에 없음.. <br>
+무진장하게 어려움..... <br>
+
+#### 1) MineSearch.jsx (OPEN_CELL)
+```jsx
+case OPEN_CELL : {
+  const tableData = [...state.tableData];
+  tableData[action.row] = [...state.tableData[action.row]];
+  let around = [];
+  if ( tableData[action.row - 1] ) {
+    around = around.concat( 
+      tableData[action.row - 1][action.cell -1], 
+      tableData[action.row - 1][action.cell],
+      tableData[action.row - 1][action.cell + 1],
+    );
+  }
+  around = around.concat(
+    tableData[action.row][action.cell - 1],
+    tableData[action.row][action.cell + 1],
+  );
+  if ( tableData[action.row + 1] ) {
+    around = around.concat(
+      tableData[action.row + 1][action.cell -1], 
+      tableData[action.row + 1][action.cell],
+      tableData[action.row + 1][action.cell + 1],
+    );
+  }
+
+  const count = around.filter( (v) => 
+    [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE]
+    .includes(v)).length;
+  console.log(around, count);
+  tableData[action.row][action.cell] = count; 
+
+  // 위에 까지 count로 주변 갯수가 몇 개인지 확인했는데 주변 갯수가 하나도 없다면!!!!
+  if (count === 0 ) {
+    // 주변 칸들을 여는데 내 옆칸이 빈 칸이면 또 내 옆에 빈 칸을 찾아서 빈 칸을 계속 찾을 것이다. 
+    // 여기서 까다로운게 MaxiumCallStack이 나오기 떄문에 조심해야한다.
+  } else {
+
+  }
+
+  return {
+    ...state,
+    tableData,
+  }
+}
+```
+
+#### 2) MineSearch.jsx (OPEN_CELL)
+```jsx
+case OPEN_CELL : {
+  const tableData = [...state.tableData];
+  tableData[action.row] = [...state.tableData[action.row]];
+  // 불변성을 지키게 위해서 객체를 만들어 줬느데 옆 칸들도 계속 열기 때문에
+  // 어떤 칸이 불변성이 안 지킬지지 모르기 때문에 모든 칸을 새로 만들어준다.
+  tableData.forEach((row, i) => {
+    tableData[i] === [...state.tableData[i]]; // 모든 칸들을 새로 객체로 만들어준다.
+  })
+  let around = [];
+  if ( tableData[action.row - 1] ) {
+    around = around.concat( 
+      tableData[action.row - 1][action.cell -1], 
+      tableData[action.row - 1][action.cell],
+      tableData[action.row - 1][action.cell + 1],
+    );
+  }
+  around = around.concat(
+    tableData[action.row][action.cell - 1],
+    tableData[action.row][action.cell + 1],
+  );
+  if ( tableData[action.row + 1] ) {
+    around = around.concat(
+      tableData[action.row + 1][action.cell -1], 
+      tableData[action.row + 1][action.cell],
+      tableData[action.row + 1][action.cell + 1],
+    );
+  }
+
+  const count = around.filter( (v) => 
+    [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE]
+    .includes(v)).length;
+  console.log(around, count);
+  tableData[action.row][action.cell] = count; 
+
+  // 위에 까지 count로 주변 갯수가 몇 개인지 확인했는데 주변 갯수가 하나도 없다면!!!!
+  if (count === 0 ) {
+    // 주변 칸들을 여는데 내 옆칸이 빈 칸이면 또 내 옆에 빈 칸을 찾아서 빈 칸을 계속 찾을 것이다. 
+    // 여기서 까다로운게 MaxiumCallStack이 나오기 떄문에 조심해야한다.
+  } else {
+
+  }
+
+  return {
+    ...state,
+    tableData,
+  }
+}
+
+```
+
+#### 3) MineSearch.jsx (OPEN_CELL)
+```jsx
+case OPEN_CELL : {
+  const tableData = [...state.tableData];
+  tableData[action.row] = [...state.tableData[action.row]];
+  // 불변성을 지키게 위해서 객체를 만들어 줬느데 옆 칸들도 계속 열기 때문에
+  // 어떤 칸이 불변성이 안 지킬지지 모르기 때문에 모든 칸을 새로 만들어준다.
+  tableData.forEach((row, i) => {
+    tableData[i] === [...state.tableData[i]]; // 모든 칸들을 새로 객체로 만들어준다.
+  });
+  const checkAround = (row, cell) => { // 내 기준으로 검사하는 함수 
+  // 함수안에 칸들을 넣어주었다.
+    let around = [];
+    if ( tableData[row - 1] ) { // 매개 변수를 했기 때문에 action. 을 없앤다.
+      around = around.concat( 
+        tableData[row - 1][cell -1],  // 매개 변수를 했기 때문에 action. 을 없앤다.
+        tableData[row - 1][cell], // 매개 변수를 했기 때문에 action. 을 없앤다.
+        tableData[row - 1][cell + 1], // 매개 변수를 했기 때문에 action. 을 없앤다.
+      ); 
+    }
+    around = around.concat(
+      tableData[row][cell - 1],
+      tableData[row][cell + 1],
+    );
+    if ( tableData[row + 1] ) {
+      around = around.concat(
+        tableData[row + 1][cell -1], 
+        tableData[row + 1][cell],
+        tableData[row + 1][cell + 1],
+      );
+    }
+
+    const count = around.filter( (v) => 
+      [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE]
+      .includes(v)).length;
+    console.log(around, count);
+    tableData[action.row][action.cell] = count; 
+    if (count === 0 ) {
+
+    } else {
+
+    }
+    checkAround(action.row, action.cell);
+
+  };
+
+  return {
+    ...state,
+    tableData,
+  }
+}
+```
+
+#### 4) MineSearch.jsx (OPEN_CELL)
+```jsx
+case OPEN_CELL : {
+  const tableData = [...state.tableData];
+  tableData[action.row] = [...state.tableData[action.row]];
+  // 불변성을 지키게 위해서 객체를 만들어 줬느데 옆 칸들도 계속 열기 때문에
+  // 어떤 칸이 불변성이 안 지킬지지 모르기 때문에 모든 칸을 새로 만들어준다.
+  tableData.forEach((row, i) => {
+    tableData[i] === [...state.tableData[i]]; // 모든 칸들을 새로 객체로 만들어준다.
+  });
+  const checkAround = (row, cell) => { // 내 기준으로 검사하는 함수 
+    let around = [];
+    if ( tableData[row - 1] ) { // 매개 변수를 했기 때문에 action. 을 없앤다.
+      around = around.concat( 
+        tableData[row - 1][cell -1], 
+        tableData[row - 1][cell],
+        tableData[row - 1][cell + 1],
+      );
+    }
+    around = around.concat(
+      tableData[row][cell - 1],
+      tableData[row][cell + 1],
+    );
+    if ( tableData[row + 1] ) {
+      around = around.concat(
+        tableData[row + 1][cell -1], 
+        tableData[row + 1][cell],
+        tableData[row + 1][cell + 1],
+      );
+    }
+
+    const count = around.filter( (v) => 
+      [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE]
+      .includes(v)).length;
+    console.log(around, count);
+    tableData[action.row][action.cell] = count; 
+    if (count === 0 ) {
+      const near = []; // 모양이 비슷한데 여기에는 주변 칸들을 클릭할 것이다.
+      if ( row - 1 > -1 ) { // 제일 위에 클릭한 경우는 내 보다 윗 칸은 없어서 
+        // 밑에 부분을 없애준다.
+        near.push([row - 1, cell - 1]);
+        near.push([row - 1, cell]);
+        near.push([row - 1, cell + 1]);
+      }
+      near.push([row, cell - 1]);
+      near.push([row, cell]);
+      near.push([row, cell + 1]);
+      if ( row - 1 > tableData.length ) { // 제일 아래 칸도 내 보다 더 아래 칸 없으니까
+        // 빝에 부분도 없애준다
+        near.push([row + 1, cell - 1]);
+        near.push([row + 1, cell]);
+        near.push([row + 1, cell + 1]);
+      }
+      near.filter(v => !!v).forEach((n) => {
+        checkAround(n[0], n[1]);
+      });
+
+    } else {
+
+    }
+  };
+  checkAround(action.row, action.cell);
+
+  return {
+    ...state,
+    tableData,
+  }
+}
+```
+
+#### 5) MineSearch.jsx (OPEN_CELL)
+```jsx
+case OPEN_CELL : {
+  const tableData = [...state.tableData];
+  tableData[action.row] = [...state.tableData[action.row]];
+  // 불변성을 지키게 위해서 객체를 만들어 줬느데 옆 칸들도 계속 열기 때문에
+  // 어떤 칸이 불변성이 안 지킬지지 모르기 때문에 모든 칸을 새로 만들어준다.
+  tableData.forEach((row, i) => {
+    tableData[i] === [...state.tableData[i]]; // 모든 칸들을 새로 객체로 만들어준다.
+  });
+  const checkAround = (row, cell) => { 
+    // 클릭하는 기준은 내가 닫힌 칸인 아닌 경우에만 걸러줘야한다.
+    if ([CODE.OPENED, CODE.FLAG_MINE, CODE.FLAG, CODE.QUESTION_MINE, CODE.QUESTION]
+          .includes(tableData[row][cell])
+    ) {
+      return; // 지뢰 있는 칸, 열린 칸은 안 열게 해준다.
+    }
+    // 좌우가 undfined를 여기서 걸러줄것이다. 방금 filter삭제 한 쪽
+    // ------>>  여기에 이동한 필터가 이쪽에 온다!!
+
+      // 왜? 옆 쪽 부분은 신경 안 쓰는지?? 이건 자바스크립트 특성이 있다.
+    let around = [];
+    if ( tableData[row - 1] ) { 
+      around = around.concat( 
+        tableData[row - 1][cell -1], 
+        tableData[row - 1][cell],
+        tableData[row - 1][cell + 1],
+      );
+    }
+    around = around.concat(
+      // 특히 여기서 윗 칸이 없으면 undefined가 되어서 에러가 나온다.
+      // 좌, 우칸이 없으면 undifned가 되어서 filter를 해서 자제적으로 없애준다. 밑쪾에도 설명 똑같이 있다.
+      tableData[row][cell - 1],
+      tableData[row][cell + 1],
+    );
+    if ( tableData[row + 1] ) {
+      around = around.concat(
+        tableData[row + 1][cell -1], 
+        tableData[row + 1][cell],
+        tableData[row + 1][cell + 1],
+      );
+    }
+
+    // 여기에서 filter를 해주기 때문에 자동적으로 사라져버린다. filter를 해서 undefined를 사라져버린다.
+    const count = around.filter( (v) => 
+      [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE]
+      .includes(v)).length;
+    console.log(around, count);
+    tableData[action.row][action.cell] = count; 
+    if (count === 0 ) {
+      const near = []; 
+      if ( row - 1 > -1 ) {
+        near.push([row - 1, cell - 1]);
+        near.push([row - 1, cell]);
+        near.push([row - 1, cell + 1]);
+      }
+      near.push([row, cell - 1]);
+      near.push([row, cell]);
+      near.push([row, cell + 1]);
+      if ( row - 1 > tableData.length ) {
+        near.push([row + 1, cell - 1]);
+        near.push([row + 1, cell]);
+        near.push([row + 1, cell + 1]);
+      }
+      // 다시 필터를 여기서 해주는게 아니고 다시 바꾼다. ------>> 이동
+      near.forEach((n) => { 
+        checkAround(n[0], n[1]); 
+      });
+
+    } else {
+
+    }
+  };
+  checkAround(action.row, action.cell);
+
+  return {
+    ...state,
+    tableData,
+  }
+}
+```
+
+#### 6) MineSearch.jsx (OPEN_CELL)
+```jsx
+case OPEN_CELL : {
+  const tableData = [...state.tableData];
+  tableData[action.row] = [...state.tableData[action.row]];
+  tableData.forEach((row, i) => {
+    tableData[i] === [...state.tableData[i]]; 
+  });
+  // 여기에서 중요한게 한 번 검사한 부분은 다시 검사하지 않도록 방지를 해야한다.
+  // 그렇지 않다면 콜 스택이 터져버린다. 그래서 캐싱을 해줘야한다.
+  // 이 방식이 다이나믹 프로그래밍이랑 비슷하다. 한 번 계산 한 곳은 계산하지 않는다.
+  const checked = []; // checked라는 배열을 만들어준다.
+  const checkAround = (row, cell) => { 
+    if ( [CODE.OPENED, CODE.FLAG_MINE, CODE.FLAG, CODE.QUESTION_MINE, CODE.QUESTION].includes(tableData[row][cell]) ) {
+      return; 
+    }
+    
+    // 이 부분이 상하좌우 아닌 경우 필터링
+    if ( row < 0 || row > tableData.length || cell < 0 || cell > tableData[0].length ) {
+      return;
+    }
+    // 이미 검사한 칸이면
+    if ( checked.includes(row + ',' + cell) ) { // row, cell을 (0, 0) 이런 행식
+      return;
+      // checked에 검사했면 checked에 넣어준다.
+    } else {
+      checked.push(row + ',' + cell); 
+    }
+    
+
+    let around = [];
+    if ( tableData[row - 1] ) { 
+      around = around.concat( 
+        tableData[row - 1][cell -1], 
+        tableData[row - 1][cell],
+        tableData[row - 1][cell + 1],
+      );
+    }
+    around = around.concat(
+      tableData[row][cell - 1],
+      tableData[row][cell + 1],
+    );
+    if ( tableData[row + 1] ) {
+      around = around.concat(
+        tableData[row + 1][cell -1], 
+        tableData[row + 1][cell],
+        tableData[row + 1][cell + 1],
+      );
+    }
+    const count = around.filter( (v) => 
+      [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE]
+      .includes(v)).length;
+    console.log(around, count);
+    tableData[action.row][action.cell] = count; 
+    if (count === 0 ) {
+      const near = []; 
+      if ( row - 1 > -1 ) {
+        near.push([row - 1, cell - 1]);
+        near.push([row - 1, cell]);
+        near.push([row - 1, cell + 1]);
+      }
+      near.push([row, cell - 1]);
+      near.push([row, cell + 1]);
+      if ( row + 1 > tableData.length ) {
+        near.push([row + 1, cell - 1]);
+        near.push([row + 1, cell]);
+        near.push([row + 1, cell + 1]);
+      }
+      // 위쪽에 코드 바껴진 쪽 보이나요?? 상하좌우 아닌 경우 필터링 쪽에 있다.
+      near.forEach((n) => { 
+        checkAround(n[0], n[1]); 
+      });
+
+    } else {
+
+    }
+  };
+  checkAround(action.row, action.cell);
+
+  return {
+    ...state,
+    tableData,
+  }
+}
+
+```
+
+#### 7) MineSearch.jsx (OPEN_CELL)
+```jsx
+case OPEN_CELL : {
+  const tableData = [...state.tableData];
+  tableData[action.row] = [...state.tableData[action.row]];
+  tableData.forEach((row, i) => {
+    tableData[i] === [...state.tableData[i]]; 
+  });
+  // 여기에서 중요한게 한 번 검사한 부분은 다시 검사하지 않도록 방지를 해야한다.
+  // 그렇지 않다면 콜 스택이 터져버린다. 그래서 캐싱을 해줘야한다.
+  // 이 방식이 다이나믹 프로그래밍이랑 비슷하다. 한 번 계산 한 곳은 계산하지 않는다.
+  const checked = []; // checked라는 배열을 만들어준다.
+  const checkAround = (row, cell) => { 
+    if ( [CODE.OPENED, CODE.FLAG_MINE, CODE.FLAG, CODE.QUESTION_MINE, CODE.QUESTION].includes(tableData[row][cell]) ) {
+      return; 
+    }
+    
+    // 이 부분이 상하좌우 아닌 경우 필터링
+    if ( row < 0 || row > tableData.length || cell < 0 || cell > tableData[0].length ) {
+      return;
+    }
+    // 이미 검사한 칸이면
+    if ( checked.includes(row + ',' + cell) ) { // row, cell을 (0, 0) 이런 행식
+      return;
+      // checked에 검사했면 checked에 넣어준다.
+    } else {
+      checked.push(row + ',' + cell); 
+    }
+    
+
+    let around = [];
+    if ( tableData[row - 1] ) { 
+      around = around.concat( 
+        tableData[row - 1][cell -1], 
+        tableData[row - 1][cell],
+        tableData[row - 1][cell + 1],
+      );
+    }
+    around = around.concat(
+      tableData[row][cell - 1],
+      tableData[row][cell + 1],
+    );
+    if ( tableData[row + 1] ) {
+      around = around.concat(
+        tableData[row + 1][cell -1], 
+        tableData[row + 1][cell],
+        tableData[row + 1][cell + 1],
+      );
+    }
+    const count = around.filter( (v) => 
+      [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE]
+      .includes(v)).length;
+    console.log(around, count);
+    tableData[action.row][action.cell] = count; 
+    if (count === 0 ) {
+      const near = []; 
+      if ( row - 1 > -1 ) {
+        near.push([row - 1, cell - 1]);
+        near.push([row - 1, cell]);
+        near.push([row - 1, cell + 1]);
+      }
+      near.push([row, cell - 1]);
+      near.push([row, cell + 1]);
+      if ( row + 1 > tableData.length ) {
+        near.push([row + 1, cell - 1]);
+        near.push([row + 1, cell]);
+        near.push([row + 1, cell + 1]);
+      }
+      // 위쪽에 코드 바껴진 쪽 보이나요?? 상하좌우 아닌 경우 필터링 쪽에 있다.
+      near.forEach((n) => { 
+        if ( tableData[n[0][1]] !== CODE.OPENED ) { // 이미 주변 칸이 연 칸이 아니라면
+          // 다시 필터링 해준다. 
+          // 주변 칸이 닫힐 경우에만 열어준다.
+          checkAround(n[0], n[1]); 
+        }
+      });
+
+    } else {
+
+    }
+  };
+  checkAround(action.row, action.cell);
+
+  return {
+    ...state,
+    tableData,
+  }
+}
+
+```
+
+
+
+
+#### 8) MineSearch.jsx (OPEN_CELL)
+```jsx
+case OPEN_CELL : {
+  const tableData = [...state.tableData];
+  tableData[action.row] = [...state.tableData[action.row]];
+  tableData.forEach((row, i) => {
+    tableData[i] === [...state.tableData[i]]; 
+  });
+  // 여기에서 중요한게 한 번 검사한 부분은 다시 검사하지 않도록 방지를 해야한다.
+  // 그렇지 않다면 콜 스택이 터져버린다. 그래서 캐싱을 해줘야한다.
+  // 이 방식이 다이나믹 프로그래밍이랑 비슷하다. 한 번 계산 한 곳은 계산하지 않는다.
+  const checked = []; // checked라는 배열을 만들어준다.
+  const checkAround = (row, cell) => { 
+    if ( [CODE.OPENED, CODE.FLAG_MINE, CODE.FLAG, CODE.QUESTION_MINE, CODE.QUESTION].includes(tableData[row][cell]) ) {
+      return; 
+    }
+    
+    // 이 부분이 상하좌우 아닌 경우 필터링
+    if ( row < 0 || row > tableData.length || cell < 0 || cell > tableData[0].length ) {
+      return;
+    }
+    // 이미 검사한 칸이면
+    if ( checked.includes(row + ',' + cell) ) { // row, cell을 (0, 0) 이런 행식
+      return;
+      // checked에 검사했면 checked에 넣어준다.
+    } else {
+      checked.push(row + ',' + cell); 
+    }
+    
+
+    let around = [];
+    if ( tableData[row - 1] ) { 
+      around = around.concat( 
+        tableData[row - 1][cell -1], 
+        tableData[row - 1][cell],
+        tableData[row - 1][cell + 1],
+      );
+    }
+    around = around.concat(
+      tableData[row][cell - 1],
+      tableData[row][cell + 1],
+    );
+    if ( tableData[row + 1] ) {
+      around = around.concat(
+        tableData[row + 1][cell -1], 
+        tableData[row + 1][cell],
+        tableData[row + 1][cell + 1],
+      );
+    }
+    const count = around.filter( (v) => 
+      [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE]
+      .includes(v)).length;
+    console.log(around, count);
+    tableData[action.row][action.cell] = count; 
+    if (count === 0 ) {
+      const near = []; 
+      if (row - 1 > -1) {
+        near.push([row -1, cell - 1]);
+        near.push([row -1, cell]);
+        near.push([row -1, cell + 1]);
+      }
+      near.push([row, cell - 1]);
+      near.push([row, cell + 1]);
+      if (row + 1 < tableData.length) {
+        near.push([row + 1, cell - 1]);
+        near.push([row + 1, cell]);
+        near.push([row + 1, cell + 1]);
+      }
+      near.forEach((n) => { 
+        if ( tableData[n[0][1]] !== CODE.OPENED ) { 
+          checkAround(n[0], n[1]); 
+        }
+      });
+
+    } else {
+
+    }
+  };
+  checkAround(action.row, action.cell);
+
+  return {
+    ...state,
+    tableData,
+  }
+}
+
+```
+
+
+#### 9) MineSearch.jsx (OPEN_CELL)
+
+이 부분 틀린 부분인데 나중에 비교해보기!!
+
+```jsx
+case OPEN_CELL : {
+  const tableData = [...state.tableData];
+  tableData.forEach((row, i) => {
+    tableData[i] = [...row];
+  });
+  const checked = []; // checked라는 배열을 만들어준다.
+  const checkAround = (row, cell) => { 
+    if ( [CODE.OPENED, CODE.FLAG_MINE, CODE.FLAG, CODE.QUESTION_MINE, CODE.QUESTION].includes(tableData[row][cell]) ) {
+      return; 
+    }
+    // 이 부분이 상하좌우 아닌 경우 필터링
+    if ( row < 0 || row > tableData.length || cell < 0 || cell > tableData[0].length ) {
+      return;
+    }
+    // 이미 검사한 칸이면
+    if ( checked.includes(row + ',' + cell) ) { // row, cell을 (0, 0) 이런 행식
+      return;
+      // checked에 검사했면 checked에 넣어준다.
+    } else {
+      checked.push(row + ',' + cell); 
+    }
+    
+    let around = [];
+    if ( tableData[row - 1] ) { 
+      around = around.concat( 
+        tableData[row - 1][cell -1], 
+        tableData[row - 1][cell],
+        tableData[row - 1][cell + 1],
+      );
+    }
+    around = around.concat(
+      tableData[row][cell - 1],
+      tableData[row][cell + 1],
+    );
+    if ( tableData[row + 1] ) {
+      around = around.concat(
+        tableData[row + 1][cell -1], 
+        tableData[row + 1][cell],
+        tableData[row + 1][cell + 1],
+      );
+    }
+    const count = around.filter( (v) => // 주변 칸 갯수 세기
+      [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE]
+      .includes(v)).length;
+    console.log(around, count);
+    tableData[action.row][action.cell] = count; 
+    if (count === 0 ) {
+      const near = []; 
+      if (row - 1 > -1) {
+        near.push([row -1, cell - 1]);
+        near.push([row -1, cell]);
+        near.push([row -1, cell + 1]);
+      }
+      near.push([row, cell - 1]);
+      near.push([row, cell + 1]);
+      if (row + 1 < tableData.length) {
+        near.push([row + 1, cell - 1]);
+        near.push([row + 1, cell]);
+        near.push([row + 1, cell + 1]);
+      }
+      near.forEach((n) => { 
+        if ( tableData[n[0][1]] !== CODE.OPENED ) { 
+          checkAround(n[0], n[1]); 
+        }
+      });
+
+    } else { // else 필요없음
+
+    }
+  };
+  checkAround(action.row, action.cell);
+
+  return {
+    ...state,
+    tableData,
+  }
+}
+
+```
+
+#### 10) MineSearch.jsx (OPEN_CELL)
+
+이게 맞는 경우임
+```jsx
+case 'OPEN_CELL': {
+  const tableData = [...state.tableData];
+  tableData.forEach((row, i) => {
+    tableData[i] = [...row];
+  });
+  const checked = [];
+  const checkAround = (row, cell) => {
+    // 위에 row >= tableData.length 되어 있는데 나중에 수정하기 공부하다가 !!
+    if (row < 0 || row > tableData.length || cell < 0 || cell > tableData[0].length) {
+      return;
+    }
+    if ([CODE.OPENED, CODE.FLAG, CODE.FLAG_MINE, CODE.QUESTION_MINE, CODE.QUESTION].includes(tableData[row][cell])) {
+      return;
+    }
+    if (checked.includes(row + '/' + cell)) {
+      return;
+    } else {
+      checked.push(row + '/' + cell);
+    }
+    let around = [
+      tableData[row][cell - 1], tableData[row][cell + 1],
+    ];
+    if (tableData[row - 1]) {
+      around = around.concat([tableData[row - 1][cell - 1], tableData[row - 1][cell], tableData[row - 1][cell + 1]]);
+    }
+    if (tableData[row + 1]) {
+      around = around.concat([tableData[row + 1][cell - 1], tableData[row + 1][cell], tableData[row + 1][cell + 1]]);
+    }
+    const count = around.filter(function (v) {
+      return [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE].includes(v);
+    }).length;
+    if (count === 0) { // 주변칸 오픈
+      if (row > -1) {
+        const near = [];
+        if (row - 1 > -1) {
+          near.push([row -1, cell - 1]);
+          near.push([row -1, cell]);
+          near.push([row -1, cell + 1]);
+        }
+        near.push([row, cell - 1]);
+        near.push([row, cell + 1]);
+        if (row + 1 < tableData.length) {
+          near.push([row + 1, cell - 1]);
+          near.push([row + 1, cell]);
+          near.push([row + 1, cell + 1]);
+        }
+        near.filter(v => !!v).forEach((n) => {
+          if (tableData[n[0]][n[1]] !== CODE.OPENED) {
+            checkAround(n[0], n[1]);
+          }
+        })
+      }
+    }
+    tableData[row][cell] = count;
+  };
+  checkAround(action.row, action.cell);
+  return {
+    ...state,
+    tableData,
+  };
+}
+
+```
