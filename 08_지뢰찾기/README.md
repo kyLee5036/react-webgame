@@ -1623,57 +1623,7 @@ case OPEN_CELL : {
 
 #### 8) MineSearch.jsx (OPEN_CELL)
 ```jsx
-case OPEN_CELL : {
-  const tableData = [...state.tableData];
-  tableData.forEach((row, i) => {
-    tableData[i] = [...row];
-  });
-  // 여기에서 중요한게 한 번 검사한 부분은 다시 검사하지 않도록 방지를 해야한다.
-  // 그렇지 않다면 콜 스택이 터져버린다. 그래서 캐싱을 해줘야한다.
-  // 이 방식이 다이나믹 프로그래밍이랑 비슷하다. 한 번 계산 한 곳은 계산하지 않는다.
-  const checked = []; // checked라는 배열을 만들어준다.
-  const checkAround = (row, cell) => { 
-    if ( [CODE.OPENED, CODE.FLAG_MINE, CODE.FLAG, CODE.QUESTION_MINE, CODE.QUESTION].includes(tableData[row][cell]) ) {
-      return; 
-    }
-    
-    // 이 부분이 상하좌우 아닌 경우 필터링
-    if ( row < 0 || row > tableData.length || cell < 0 || cell > tableData[0].length ) {
-      return;
-    }
-    // 이미 검사한 칸이면
-    if ( checked.includes(row + ',' + cell) ) { // row, cell을 (0, 0) 이런 행식
-      return;
-      // checked에 검사했면 checked에 넣어준다.
-    } else {
-      checked.push(row + ',' + cell); 
-    }
-    
-
-    let around = [];
-    if ( tableData[row - 1] ) { 
-      around = around.concat( 
-        tableData[row - 1][cell -1], 
-        tableData[row - 1][cell],
-        tableData[row - 1][cell + 1],
-      );
-    }
-    around = around.concat(
-      tableData[row][cell - 1],
-      tableData[row][cell + 1],
-    );
-    if ( tableData[row + 1] ) {
-      around = around.concat(
-        tableData[row + 1][cell -1], 
-        tableData[row + 1][cell],
-        tableData[row + 1][cell + 1],
-      );
-    }
-    const count = around.filter( (v) => 
-      [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE]
-      .includes(v)).length;
-    console.log(around, count);
-    tableData[action.row][action.cell] = count; 
+	...생략
     if (count === 0 ) {
       const near = []; 
       if (row - 1 > -1) {
@@ -1683,13 +1633,13 @@ case OPEN_CELL : {
       }
       near.push([row, cell - 1]);
       near.push([row, cell + 1]);
-      if (row + 1 < tableData.length) {
+      if (row + 1 < tableData.length) { // 수정한 곳
         near.push([row + 1, cell - 1]);
         near.push([row + 1, cell]);
         near.push([row + 1, cell + 1]);
       }
       near.forEach((n) => { 
-        if ( tableData[n[0][1]] !== CODE.OPENED ) { 
+        if ( tableData[n[0][1]] !== CODE.OPENED ) { // 수정한 곳, 주석삭제하였음
           checkAround(n[0], n[1]); 
         }
       });
@@ -1705,7 +1655,6 @@ case OPEN_CELL : {
     tableData,
   }
 }
-
 ```
 
 
