@@ -6,6 +6,7 @@
 + [왼쪽 오른쪽 클릭 로직 작성하기](#왼쪽-오른쪽-클릭-로직-작성하기)
 + [지뢰 개수 표시하기](#지뢰-개수-표시하기)
 + [빈 칸들 한 번에 열기](#빈-칸들-한-번에-열기)
++ [승리 조건 체크와 타이머](#승리-조건-체크와-타이머)
 
 시작하기 전에
 #### index.html
@@ -1810,3 +1811,447 @@ case 'OPEN_CELL': {
 }
 
 ```
+
+
+## 승리 조건 체크와 타이머
+
+마지막으로 승리조건과 타이머를 한다.<br>
+
+
+#### 1) MineSearch.jsx
+```jsx
+
+const initalState = {
+  tableData: [],
+  timer: 0,
+  result: '',
+  halted: true, // halted가 '중단된' 의미..
+  openedCount : 0, // 칸을 몇개를 열었는지 체크하는 거
+};
+
+case OPEN_CELL: {
+  const tableData = [...state.tableData];
+      tableData.forEach((row, i) => {
+        tableData[i] = [...row];
+      });
+      const checked = [];
+
+      let count = 0;
+
+      const checkAround = (row, cell) => {
+      ...생략
+        count += 1;
+        let around = [
+          tableData[row][cell - 1], tableData[row][cell + 1],
+        ];
+        ...생략
+
+      // 승리조건 체크
+
+      return {
+        ...state,
+        tableData,
+        openedCount : state.openedCount + count, // 여기에다가 기록을 한다.
+      };
+    }
+```
+
+#### 2) MineSearch.jsx
+```jsx
+const initalState = {
+  tableData: [],
+  data : {
+    row : 0,
+    cell : 0,
+    mine : 0,
+  },
+  timer: 0,
+  result: '',
+  halted: true, // halted가 '중단된' 의미..
+  openedCount : 0, // 칸을 몇개를 열었는지 체크하는 거
+};
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case START_GAME: /// 게임시작할 때 기록을 해준다.
+    return { 
+      ...state,
+      // 기록하는 곳
+      data : {
+        row : action.row,
+        cell : action.cell,
+        mine : action.mine,
+      }, // 기록을 해준다
+
+      tableData : plantMine(action.row, action.cell, action.mine),
+      halted: false, 
+    };
+
+```
+
+
+#### 3) MineSearch.jsx (OPEN_CELL)
+```jsx
+case OPEN_CELL: {
+      const tableData = [...state.tableData];
+      tableData.forEach((row, i) => {
+        tableData[i] = [...row];
+      });
+      const checked = [];
+      ...생략
+        tableData[row][cell] = count;
+      };
+      checkAround(action.row, action.cell);
+      // 승리조건 체크
+      // 지뢰가 없는 칸 만큼 칸을 다 열면 승리한다.
+      let halted = false;
+      let result = '';
+      if ( state.row * state.cell - state.mine === state.openedCount + count) {
+        halted = true;
+        result = `승리하셨습니다`;
+      }
+      return {
+        ...state,
+        tableData,
+        openedCount : state.openedCount + count, // 여기에다가 기록을 한다.
+        halted, // 추가
+        result, // 추가
+      };
+    }
+
+```
+
+에러가 나올 것이다. <br>
+`Uncaught ReferenceError: Cannot access 'count' before initialization`<br>
+count변수가 겹친다!!!!!!!<br>
+
+#### 4) MineSearch.jsx (OPEN_CELL)
+```jsx
+case OPEN_CELL: {
+      const tableData = [...state.tableData];
+      tableData.forEach((row, i) => {
+        tableData[i] = [...row];
+      });
+      const checked = [];
+
+      let openedCount = 0; // 수정 부분
+
+      const checkAround = (row, cell) => {
+        if (row < 0 || row > tableData.length || cell < 0 || cell > tableData[0].length) {
+          return;
+        }
+        if ([CODE.OPENED, CODE.FLAG, CODE.FLAG_MINE, CODE.QUESTION_MINE, CODE.QUESTION].includes(tableData[row][cell])) {
+          return;
+        }
+        if (checked.includes(row + '/' + cell)) {
+          return;
+        } else {
+          checked.push(row + '/' + cell);
+        }
+        openedCount += 1; // 수정 부분
+        let around = [
+          tableData[row][cell - 1], tableData[row][cell + 1],
+        ];
+        ....생략
+
+      console.log(state.row * state.cell - state.mine, state.openedCount + openedCount);  
+      if ( state.row * state.cell - state.mine === state.openedCount + openedCount) { // 수정 부분
+        halted = true;
+        result = `승리하셨습니다`;
+      }
+      return {
+        ...state,
+        tableData,
+        openedCount : state.openedCount + openedCount, // 여기에다가 기록을 한다., // 수정 부분
+        halted,
+        result,
+      };
+    }
+
+```
+수정 부분을 보면 고쳐져 있을 것이다.<br>
+
+
+여기서 전부 체크해도 승리조건이 안 뜬다... <br>
+`console.log(state.row * state.cell - state.mine, state.openedCount + openedCount)`
+을 해보면 NaN이 되어있다.<br>
+state.row * state.cell - state.mine이 NaN이 되어있다. <br>
+
+`console.log(state.data.row * state.data.cell - state.data.mine, state.openedCount + openedCount)`
+이렇게 수정하면 된다.<br>
+근데 왜 data가 들어가는지 알아보자!!<br>
+
+#### 5) MineSearch.jsx (OPEN_CELL)
+
+```jsx
+let result = '';
+console.log(state.data.row * state.data.cell - state.data.mine, state.openedCount + openedCount)
+if ( state.data.row * state.data.cell - state.data.mine === state.openedCount + openedCount) {
+  halted = true;
+  result = `승리하셨습니다`;
+}
+
+```
+수정하면 승리조건이 된다.<br>
+
+
+하지만 재시작하면, state에서 openedCount가 중첩이 되서 초기화 해야한다.<br>
+초기화는 게임시작할 때 해주면 된다.<br>
+
+#### 6) MineSearch.jsx
+
+```jsx
+const reducer = (state, action) => {
+  switch (action.type) {
+    case START_GAME: 
+    return { 
+      ...state,
+      data : {
+        row : action.row,
+        cell : action.cell,
+        mine : action.mine,
+      }, 
+      tableData : plantMine(action.row, action.cell, action.mine),
+      halted: false, 
+      openedCount : 0, // 바뀐 부분 여기!!! 초기화를 해줬다.
+    };
+    case OPEN_CELL: {
+      const tableData = [...state.tableData];
+      tableData.forEach((row, i) => {
+        tableData[i] = [...row];
+      });
+      const checked = [];
+
+      let openedCount = 0;
+
+      const checkAround = (row, cell) => {
+        if (row < 0 || row > tableData.length || cell < 0 || cell > tableData[0].length) {
+          return;
+        }
+        if ([CODE.OPENED, CODE.FLAG, CODE.FLAG_MINE, CODE.QUESTION_MINE, CODE.QUESTION].includes(tableData[row][cell])) {
+          return;
+        }
+        if (checked.includes(row + '/' + cell)) {
+          return;
+        } else {
+          checked.push(row + '/' + cell);
+        }
+        openedCount += 1;
+        let around = [
+          tableData[row][cell - 1], tableData[row][cell + 1],
+        ];
+        if (tableData[row - 1]) {
+          around = around.concat([tableData[row - 1][cell - 1], tableData[row - 1][cell], tableData[row - 1][cell + 1]]);
+        }
+        if (tableData[row + 1]) {
+          around = around.concat([tableData[row + 1][cell - 1], tableData[row + 1][cell], tableData[row + 1][cell + 1]]);
+        }
+        const count = around.filter(function (v) {
+          return [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE].includes(v);
+        }).length;
+        if (count === 0) { // 주변칸 오픈
+          if (row > -1) {
+            const near = [];
+            if (row - 1 > -1) {
+              near.push([row -1, cell - 1]);
+              near.push([row -1, cell]);
+              near.push([row -1, cell + 1]);
+            }
+            near.push([row, cell - 1]);
+            near.push([row, cell + 1]);
+            if (row + 1 < tableData.length) {
+              near.push([row + 1, cell - 1]);
+              near.push([row + 1, cell]);
+              near.push([row + 1, cell + 1]);
+            }
+            near.filter(v => !!v).forEach((n) => {
+              if (tableData[n[0]][n[1]] !== CODE.OPENED) {
+                checkAround(n[0], n[1]);
+              }
+            })
+          }
+        }
+        tableData[row][cell] = count;
+      };
+      checkAround(action.row, action.cell);
+      let halted = false;
+      let result = '';
+      console.log(state.data.row * state.data.cell - state.data.mine, state.openedCount + openedCount)
+      if ( state.data.row * state.data.cell - state.data.mine === state.openedCount + openedCount) {
+        halted = true;
+        result = `승리하셨습니다`;
+      }
+      return {
+        ...state,
+        tableData,
+        openedCount : state.openedCount + openedCount, // 여기에다가 기록을 한다.
+        halted,
+        result,
+      };
+    }
+
+```
+
+
+이 다음부터는 timer를 1초씩 증가를 시켜준다.<br>
+INCREMENT_TIMER 라는 것을 추가해준다.<br>
+
+#### 7) MineSearch.jsx 
+```jsx
+case INCREMENT_TIMER : {
+      return {
+        ...state,
+        timer : state.timer + 1,
+      }
+    }
+
+```
+#### 8) MineSearch.jsx 
+
+```jsx
+case START_GAME: 
+    return { 
+      ...state,
+      data : {
+        row : action.row,
+        cell : action.cell,
+        mine : action.mine,
+      }, 
+      tableData : plantMine(action.row, action.cell, action.mine),
+      halted: false, 
+      openedCount : 0,
+      timer : 0, // 타이머도 초기화를 시켜줘야한다.
+    };
+
+```
+
+#### 9) MineSearch.jsx 
+
+```jsx
+const MineSearch = () => {
+
+  const [state, dispatch] = useReducer(reducer, initalState);
+  const { tableData, halted, timer, result } = state;
+
+  const value = useMemo(() => (
+    { tableData, halted, dispatch }
+  ), [tableData, halted]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      dispatch( { type : INCREMENT_TIMER })
+    }, 1000)
+    return () => {
+      clearInterval(timer);
+    }
+  }, []);
+
+  ....생략
+```
+여기서 문제인게 시작을 누르면 타이머가 되도록 해야한다.<br>
+
+#### 10) MineSearch.jsx
+
+```jsx
+useEffect(() => {
+  let timer;
+  if ( halted === false ) { // 중단이 풀렸을 때 게임이 시작한다.
+    timer = setInterval(() => {
+      dispatch( { type : INCREMENT_TIMER })
+    }, 1000)
+  }
+  return () => {
+    clearInterval(timer);
+  }
+}, [halted]);
+```
+
+`result = '승리하셨습니다';` 이 부분을 밑에 처럼 바꿔주면<br>
+`result = '${state.timer}' 승리하셨습니다`;` 몇 초만에 승리한 지를 알 수 있다.<br>
+소스코드는 알아서 찾기..<br>
+
+근데 갑자기... 버그가 나온다...<br>
+버그 내용은 애매하게 겹칠 때에는 겹쳐있는 칸을 동시에 숫자를 세고있어서 막아야한다.<br>
+겹치는 부분의 의해서 에러가 생기는 것이다. 겹치는 부분도 같이 카운트하기 때문이다.<br>
+
+#### 11) MineSearch.jsx (OPEN_CELL)
+```jsx
+case OPEN_CELL: {
+  const tableData = [...state.tableData];
+  tableData.forEach((row, i) => {
+    tableData[i] = [...row];
+  });
+  const checked = [];
+  let openedCount = 0;
+  const checkAround = (row, cell) => {
+    if (row < 0 || row > tableData.length || cell < 0 || cell > tableData[0].length) {
+      return;
+    }
+    if ([CODE.OPENED, CODE.FLAG, CODE.FLAG_MINE, CODE.QUESTION_MINE, CODE.QUESTION].includes(tableData[row][cell])) {
+      return;
+    }
+    if (checked.includes(row + '/' + cell)) {
+      return;
+    } else {
+      checked.push(row + '/' + cell);
+    }
+    
+    let around = [
+      tableData[row][cell - 1], tableData[row][cell + 1],
+    ];
+    if (tableData[row - 1]) {
+      around = around.concat([tableData[row - 1][cell - 1], tableData[row - 1][cell], tableData[row - 1][cell + 1]]);
+    }
+    if (tableData[row + 1]) {
+      around = around.concat([tableData[row + 1][cell - 1], tableData[row + 1][cell], tableData[row + 1][cell + 1]]);
+    }
+    const count = around.filter(function (v) {
+      return [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE].includes(v);
+    }).length;
+    if (count === 0) { // 주변칸 오픈
+      if (row > -1) {
+        const near = [];
+        if (row - 1 > -1) {
+          near.push([row -1, cell - 1]);
+          near.push([row -1, cell]);
+          near.push([row -1, cell + 1]);
+        }
+        near.push([row, cell - 1]);
+        near.push([row, cell + 1]);
+        if (row + 1 < tableData.length) {
+          near.push([row + 1, cell - 1]);
+          near.push([row + 1, cell]);
+          near.push([row + 1, cell + 1]);
+        }
+        near.filter(v => !!v).forEach((n) => {
+          if (tableData[n[0]][n[1]] !== CODE.OPENED) {
+            checkAround(n[0], n[1]);
+          }
+        })
+      }
+    }
+    // 이 부분 추가하였음!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    if ( tableData[row][cell] === CODE.NORMAL) { // 내 칸이 닫힌 칸(일반 칸)이면 카운트 증가
+      openedCount += 1; 
+    } // 이 부분 추가하였고, openedCount위치를 옮겼다.
+    tableData[row][cell] = count;
+  };
+  checkAround(action.row, action.cell);
+  let halted = false;
+  let result = '';
+  console.log(state.data.row * state.data.cell - state.data.mine, state.openedCount + openedCount)
+  if ( state.data.row * state.data.cell - state.data.mine === state.openedCount + openedCount) {
+    halted = true;
+    result = `${state.timer} 승리하셨습니다`;
+  }
+  return {
+    ...state,
+    tableData,
+    openedCount : state.openedCount + openedCount, // 여기에다가 기록을 한다.
+    halted,
+    result,
+  };
+}
+
+```
+
