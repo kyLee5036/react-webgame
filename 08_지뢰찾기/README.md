@@ -1197,12 +1197,11 @@ case OPEN_CELL : {
 ```jsx
 case OPEN_CELL : {
   const tableData = [...state.tableData];
-  tableData[action.row] = [...state.tableData[action.row]];
   // 불변성을 지키게 위해서 객체를 만들어 줬느데 옆 칸들도 계속 열기 때문에
   // 어떤 칸이 불변성이 안 지킬지지 모르기 때문에 모든 칸을 새로 만들어준다.
   tableData.forEach((row, i) => {
-    tableData[i] === [...state.tableData[i]]; // 모든 칸들을 새로 객체로 만들어준다.
-  })
+    tableData[i] = [...row];　// 모든 칸들을 새로 객체로 만들어준다
+  });
   let around = [];
   if ( tableData[action.row - 1] ) {
     around = around.concat( 
@@ -1249,11 +1248,10 @@ case OPEN_CELL : {
 ```jsx
 case OPEN_CELL : {
   const tableData = [...state.tableData];
-  tableData[action.row] = [...state.tableData[action.row]];
   // 불변성을 지키게 위해서 객체를 만들어 줬느데 옆 칸들도 계속 열기 때문에
   // 어떤 칸이 불변성이 안 지킬지지 모르기 때문에 모든 칸을 새로 만들어준다.
   tableData.forEach((row, i) => {
-    tableData[i] === [...state.tableData[i]]; // 모든 칸들을 새로 객체로 만들어준다.
+    tableData[i] = [...row];　// 모든 칸들을 새로 객체로 만들어준다
   });
   const checkAround = (row, cell) => { // 내 기준으로 검사하는 함수 
   // 함수안에 칸들을 넣어주었다.
@@ -1302,11 +1300,8 @@ case OPEN_CELL : {
 ```jsx
 case OPEN_CELL : {
   const tableData = [...state.tableData];
-  tableData[action.row] = [...state.tableData[action.row]];
-  // 불변성을 지키게 위해서 객체를 만들어 줬느데 옆 칸들도 계속 열기 때문에
-  // 어떤 칸이 불변성이 안 지킬지지 모르기 때문에 모든 칸을 새로 만들어준다.
   tableData.forEach((row, i) => {
-    tableData[i] === [...state.tableData[i]]; // 모든 칸들을 새로 객체로 만들어준다.
+    tableData[i] = [...row];
   });
   const checkAround = (row, cell) => { // 내 기준으로 검사하는 함수 
     let around = [];
@@ -1372,11 +1367,8 @@ case OPEN_CELL : {
 ```jsx
 case OPEN_CELL : {
   const tableData = [...state.tableData];
-  tableData[action.row] = [...state.tableData[action.row]];
-  // 불변성을 지키게 위해서 객체를 만들어 줬느데 옆 칸들도 계속 열기 때문에
-  // 어떤 칸이 불변성이 안 지킬지지 모르기 때문에 모든 칸을 새로 만들어준다.
   tableData.forEach((row, i) => {
-    tableData[i] === [...state.tableData[i]]; // 모든 칸들을 새로 객체로 만들어준다.
+    tableData[i] = [...row];
   });
   const checkAround = (row, cell) => { 
     // 클릭하는 기준은 내가 닫힌 칸인 아닌 경우에만 걸러줘야한다.
@@ -1454,9 +1446,8 @@ case OPEN_CELL : {
 ```jsx
 case OPEN_CELL : {
   const tableData = [...state.tableData];
-  tableData[action.row] = [...state.tableData[action.row]];
   tableData.forEach((row, i) => {
-    tableData[i] === [...state.tableData[i]]; 
+    tableData[i] = [...row];
   });
   // 여기에서 중요한게 한 번 검사한 부분은 다시 검사하지 않도록 방지를 해야한다.
   // 그렇지 않다면 콜 스택이 터져버린다. 그래서 캐싱을 해줘야한다.
@@ -1541,9 +1532,8 @@ case OPEN_CELL : {
 ```jsx
 case OPEN_CELL : {
   const tableData = [...state.tableData];
-  tableData[action.row] = [...state.tableData[action.row]];
   tableData.forEach((row, i) => {
-    tableData[i] === [...state.tableData[i]]; 
+    tableData[i] = [...row];
   });
   // 여기에서 중요한게 한 번 검사한 부분은 다시 검사하지 않도록 방지를 해야한다.
   // 그렇지 않다면 콜 스택이 터져버린다. 그래서 캐싱을 해줘야한다.
@@ -1635,9 +1625,8 @@ case OPEN_CELL : {
 ```jsx
 case OPEN_CELL : {
   const tableData = [...state.tableData];
-  tableData[action.row] = [...state.tableData[action.row]];
   tableData.forEach((row, i) => {
-    tableData[i] === [...state.tableData[i]]; 
+    tableData[i] = [...row];
   });
   // 여기에서 중요한게 한 번 검사한 부분은 다시 검사하지 않도록 방지를 해야한다.
   // 그렇지 않다면 콜 스택이 터져버린다. 그래서 캐싱을 해줘야한다.
