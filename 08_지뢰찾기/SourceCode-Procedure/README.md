@@ -4,6 +4,7 @@
 + [지뢰 개수 표시하기](#지뢰-개수-표시하기) : 정상
 + [빈 칸들 한 번에 열기](#빈-칸들-한-번에-열기) : 뭔가 코드가 이상할 수 있으니까 제로초님 소스 참고
 + [승리 조건 체크와 타이머](#승리-조건-체크와-타이머) : 뭔가 코드가 이상할 수 있으니까 제로초님 소스 참고
++ [Context api 최적화](#Context-api-최적화)
 
 ## createContexnt와 Provider
 #### MineSearch.jsx
@@ -1402,4 +1403,218 @@ const MineSearch = () => {
 };
 
 export default MineSearch;
+```
+
+
+## Context api 최적화
+
+#### Form.jsx
+```jsx
+import React, {useState, useCallback, useContext, memo} from 'react';
+import {TableContext, START_GAME} from './MineSearch'
+
+// dispatch를 context-api를 통해서 가져오기
+const Form = memo(() => {
+  const [row, setRow] = useState(10); // 세로 - 줄
+  const [cell, setCell] = useState(10); // 가로 -칸
+  const [mine, setMine] = useState(10); // 지뢰
+  const {dispatch} = useContext(TableContext);
+
+  const onChangeRow = useCallback((e) => { // useCallback으로 불필요한 렌더링을 막아준다. 습관을 가지는게 좋다.
+    setRow(e.target.value);
+  }, []);
+  const onChangeCell = useCallback((e) => {
+    setCell(e.target.value);
+  }, []);
+  const onChangeMine = useCallback((e) => {
+    setMine(e.target.value);
+  }, []);
+
+  // 이게 중요하다. 여기에다가 context-api를 적용할 것이다.
+  const onClickBtn = useCallback( () => {
+    dispatch({
+      type: START_GAME, row, cell ,mine // START_GAME을 하는 순간, 여기서 row, cell, mine은 데이터를 넘겨준다.
+    })
+  }, [row, cell ,mine]);
+  
+  return (
+    <div>
+      <input type="number" placeholder="세로" value={row} onChange={onChangeRow} />
+      <input type="number" placeholder="가로" value={cell} onChange={onChangeCell} />
+      <input type="number" placeholder="지뢰" value={mine} onChange={onChangeMine} />
+      <button onClick={onClickBtn}>시작</button>
+    </div>
+  );
+});
+
+export default Form;
+```
+
+
+#### Table.jsx
+```jsx
+import React, {useContext, memo} from 'react';
+import Tr from './Tr';
+import { TableContext } from './MineSearch';
+
+const Table = memo(() => {
+  const { tableData } = useContext(TableContext);
+  return (
+    <table>
+      { Array(tableData.length).fill().map((tr, i) => <Tr rowIndex={i} />) }
+    </table>
+  )
+});
+
+export default Table;
+```
+
+
+#### Tr.jsx
+```jsx
+import React, {useContext, memo} from 'react';
+import Td from './Td';
+import { TableContext } from './MineSearch';
+
+const Tr = memo(({ rowIndex }) => {
+  const { tableData } = useContext(TableContext);
+
+  return (
+    <tr>
+      { tableData[0] && Array(tableData[0].length).fill().map((td, i) => 
+      <Td rowIndex={rowIndex} cellIndex={i}/>
+      ) }
+    </tr>
+  )
+  
+});
+
+export default Tr;
+
+
+```
+
+
+#### Td.jsx
+```jsx
+import React, {useContext, useCallback, memo, useMemo} from 'react';
+import { CODE, TableContext, OPEN_CELL, CLICK_MINE, FLAG_CELL, QUESTION_CELL, NORMALIZE_CELL } from './MineSearch';
+
+
+const getTdStyle = (code) => {
+  switch (code) {
+    case CODE.NORMAL: // 기본적으로 컴은 칸으로 한다.
+    case CODE.MINE:
+      return {
+        background: '#444', // 회색
+      };
+    case CODE.CLICKED_MINE:
+    case CODE.OPENED:
+      return {
+        background: 'white',
+      };
+    case CODE.QUESTION_MINE:
+    case CODE.QUESTION:
+      return {
+        background: 'yellow',
+      }
+      case CODE.FLAG_MINE:
+      case CODE.FLAG:
+        return {
+          background: 'red',
+        };
+    default: 
+      return {
+        background: 'white',
+      };
+  }
+};
+
+const getTdText = (code) => {
+  console.log('getTdText');
+  switch (code) {
+    case CODE.NORMAL: // 기본적으로 빈 칸으로 한다.
+      return '';
+    case CODE.MINE: // 일단 디버깅이 편하도록 지뢰 칸을 X로 한다. 나중에 X를 지우면 된다.
+      return 'X';
+    case CODE.CLICKED_MINE: 
+      return '뻥';
+    case CODE.FLAG_MINE:
+    case CODE.FLAG:
+      return '!';
+    case CODE.QUESTION:
+    case CODE.QUESTION_MINE:
+      return '?'
+    default:
+      return code || '';
+  }
+};
+
+const Td = ({rowIndex, cellIndex}) => {
+  const { tableData, dispatch, halted } = useContext(TableContext);
+  const onClickTd = useCallback(() => {
+    if (halted) {
+      return;
+    }
+    switch (tableData[rowIndex][cellIndex]) { 
+      case CODE.OPENED:     
+      case CODE.FLAG_MINE:
+      case CODE.FLAG:
+      case CODE.QUESTION_MINE:
+      case CODE.QUESTION:
+        return;
+      case CODE.NORMAL: // 일반 칸 클릭 했을 때 
+        dispatch({ type: OPEN_CELL, row: rowIndex, cell: cellIndex});
+        return;
+      case CODE.MINE: // 지뢰클릭 했을 때 뻥 터지게 한다.
+        dispatch({type : CLICK_MINE, row: rowIndex, cell: cellIndex})
+    
+      default:
+        return;
+    }
+  }, [tableData[rowIndex][cellIndex], halted] ); 
+
+  const onRightClickTd = useCallback((e) => {
+    e.preventDefault(); // 해주는 이유가 오른쪽 클릭하면 창을 안 나오기 위해서이다.
+    if (halted) {
+      return;
+    }
+    switch (tableData[rowIndex][cellIndex]) {
+      case CODE.NORMAL:
+      case CODE.MINE: // 지뢰, 보통칸 클릭햇을 때에는 깃발로
+        dispatch({ type : FLAG_CELL, row: rowIndex, cell: cellIndex});
+        return; // return이든 break이든 끊어줘야 함
+      case CODE.FLAG_MINE:
+      case CODE.FLAG: // 깃발( 보통, 지뢰)을 클릭했을 때에는 물음표로
+        dispatch({ type: QUESTION_CELL, row: rowIndex, cell: cellIndex });
+        return; // return이든 break이든 끊어줘야 함
+      case CODE.QUESTION:
+      case CODE.QUESTION_MINE: // 물음표( 보통, 지뢰)을 클릭했을 때에는 물음표로
+        dispatch({ type: NORMALIZE_CELL, row: rowIndex, cell: cellIndex});
+        return; // return이든 break이든 끊어줘야 함
+      default:
+        return; // return이든 break이든 끊어줘야 함
+    }
+  }, [tableData[rowIndex][cellIndex], halted]);
+
+  console.log('td rendered');
+
+  return useMemo(() => (
+    <RealTd onContextMenu={onRightClickTd} onClickTd={onClickTd} cell={tableData[rowIndex][cellIndex]} />
+  ), [tableData[rowIndex][cellIndex]]);
+  
+};
+
+const RealTd = memo(({ cell, onRightClickTd, onClickTd }) => {
+  console.log('rendered');
+  return (
+    <td
+      onClick={onClickTd}
+      style={getTdStyle(cell)}
+      onContextMenu={onRightClickTd}
+    >{getTdText(cell)}</td>
+  )
+});
+
+export default Td;
 ```

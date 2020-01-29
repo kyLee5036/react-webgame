@@ -7,6 +7,7 @@
 + [지뢰 개수 표시하기](#지뢰-개수-표시하기)
 + [빈 칸들 한 번에 열기](#빈-칸들-한-번에-열기)
 + [승리 조건 체크와 타이머](#승리-조건-체크와-타이머)
++ [Context api 최적화](#Context-api-최적화)
 
 시작하기 전에
 #### index.html
@@ -2255,3 +2256,189 @@ case OPEN_CELL: {
 
 ```
 
+## Context api 최적화
+
+이제부터 최적화를 할 것이다.
+
+#### MineSearch.jsx
+```jsx
+const value = useMemo(() => (
+    { tableData, halted, dispatch }
+  ), [tableData, halted]);
+
+...생략
+return (
+    <>
+      <TableContext.Provider value={value}>
+        <Form /> 
+        <div>{timer}</div>
+        <Table />
+        <div>{result}</div>
+      </TableContext.Provider>
+    </>
+```
+여기서 TableContext를 값을 넣어줄 때에는 <strong>useMemo</strong>를 해줘야한다. <br>
+왜냐하면 value가 바뀔 때마다 리렌더링 되기때문에 <strong>useMemo로 캐싱</strong>을 해줘야한다 !! <br>
+
+#### Form.jsx
+```jsx
+const Form = memo(() => { 
+  // memo를 해줘서 처음부분(시작 하기 전 부분)타이머할 때마다 깜박임을 없애주기위해서이다.
+
+  const [row, setRow] = useState(10); // 세로 - 줄
+  const [cell, setCell] = useState(10); // 가로 -칸
+  const [mine, setMine] = useState(10); // 지뢰
+  ...생략
+});
+```
+하지만 테이블이 자꾸 깜박깜박(반짝) 거린다. <br>
+테이블도 기본적으로 memo를 해본다. <br>
+
+React.memo를 할려면 하위 컴포넌트도 기본적으로 React.memo를 적용해야한다. <br>
+> 즉, table컴포넌트을 React.memo로 했으면 tr컴포넌트, td컴포넌트도 React.memo를 해줘야한다. <br>
+
+#### Table.jsx
+```jsx
+const Table = memo(() => { // memo를 적용하였다.
+  const { tableData } = useContext(TableContext);
+  ...생략
+});
+```
+
+#### Tr.jsx
+```jsx
+const Tr = memo(({ rowIndex }) => { // memo를 적용하였다.
+  ...생략
+});
+```
+#### Td.jsx
+
+```jsx
+const Td = memo(({rowIndex, cellIndex}) => { // memo를 적용하였다.
+  ...생략
+  
+});
+```
+하위 컴포넌트 React.memo를 다 적용하였다.<br>
+여기에서 보면 Table컴포넌트를 React.memo를 하였으니 하위 컴포넌트 tr컴포넌트, td컴포넌트도 React.memo를 하였다.<br>
+
+결과는 React.memo를 적용하면 table컴포넌트는 리렌더링이 되지않는다 (깜박(반짝반짝)거리지가 않는다.)<br>
+하지만, Form태그가 깜박거린다 (  이 부분에 대해서는 나중에 설명하겠음. )<br>
+
+그리고 칸을 클릭하면 전체가 반짝거린다. <br>
+응?? memo를 했는데.. 왜 전체가 깜박거리지?? (설명은 바로 밑에!!)<br>
+#### Td.jsx
+```jsx
+const Td = memo(({rowIndex, cellIndex}) => {
+  const { tableData, dispatch, halted } = useContext(TableContext);
+  const onClickTd = useCallback(() => {
+  ...생략
+  
+});
+```
+
+이게 context-api를 쓰면 state가 바뀔 때마다 기본적으로 Td전체가 리렌더링 되기떄문이다.
+
+#### Td.jsx
+```jsx
+const Td = memo(({rowIndex, cellIndex}) => {
+  ...생략
+  console.log('td rendered');
+
+  return (
+  
+  )
+});
+```
+여기서 `console.log('td rendered')`가 100번씩이나 표시가 된다. <br>
+그래서 `return ()` 부분에 어떻게 해줘야한다. `console.log()`에 실행되는건 괜찮은데<br>
+`return ()`부분에서 꼭 캐싱을 해줘야한다. 그래서 <strong>useMemo</strong>를 return부분에 해줘야한다.<br>
+
+#### Td.jsx
+```jsx
+const Td = memo(({rowIndex, cellIndex}) => {
+  ...생략
+  console.log('td rendered');
+
+  return useMemo( () => (
+    <td
+      style={ getTdStyle(tableData[rowIndex][cellIndex]) }
+      onClick={onClickTd}
+      onContextMenu={onRightClickTd}
+    > { getTdText(tableData[rowIndex][cellIndex]) } </td> 
+  ), [tableData[rowIndex][cellIndex]]); // 바뀌는 값
+  
+});
+```
+context-api를 쓰면 실제로 리렌더링이 안되더라도 자꾸 한 번씩은 깜박거린다. <br>
+`console.log('td renderer');`는 글자에 써있지만, 실제로 리렌더링 되 있는지를 판단 해야한다.<br>
+
+근데 useMemo를 사용해서 리렌더링이 안 될 것이다. (어떤 근거로??) 밑에 설명함<br>
+
+#### Td.jsx (getTdText)
+```jsx
+const getTdText = (code) => {
+  console.log('getTdText');
+  ...생략
+};
+```
+실제로 한 칸 클릭해서 한 칸만 열리는것을 클릭해서 확인해함!! 한 칸 열어서 여러 칸 열리는 것이 아님!!!! <br>
+`const Td = () = {}`라는 함수는 실행되지만 실제로 return 중요한 부분은 셀에 클릭한 부분만 실행된다. <br>
+그러니까 getTdText가 열린 칸 만큼 `console.log('getTdTesx')`가 찍힌다. <br>
+한 칸 열어서 5칸 열리면, 5개의 `console.log('getTdText')`가 콘솔 창에 표시되고, <br>
+한 칸 열어서 1칸 열리면, 1개의 `console.log('getTdText')`가 콘솔 창에 표시된다. <br>
+
+여기서 useMemo를 안하고 분리하는 방법도 있다. <br>
+
+#### Td.jsx (전의 모습)
+```jsx
+const Td = ({rowIndex, cellIndex}) => {
+  ...생략
+
+  return useMemo( () => (
+    <td
+      style={ getTdStyle(tableData[rowIndex][cellIndex]) }
+      onClick={onClickTd}
+      onContextMenu={onRightClickTd}
+    > { getTdText(tableData[rowIndex][cellIndex]) } </td> 
+  ), [tableData[rowIndex][cellIndex]]);
+
+});
+```
+
+#### Td.jsx (후의 모습)
+```jsx
+const Td = ({rowIndex, cellIndex}) => {
+  ...생략
+
+  console.log('td rendered');
+  return useMemo(() => (
+    <RealTd onContextMenu={onRightClickTd} onClickTd={onClickTd} cell={tableData[rowIndex][cellIndex]} />
+  ), [tableData[rowIndex][cellIndex]]);
+};
+
+const RealTd = memo(({ cell, onContextMenu, onClickTd }) => {
+  console.log('ㅊㅊ');
+  return (
+    <td
+      onClick={onClickTd}
+      style={getTdStyle(cell)}
+      onContextMenu={onRightClickTd}
+    >{getTdText(cell)}</td>
+  )
+});
+```
+한 칸 클릭했을 때 한 칸만 열리는 것 <br>
+-> `console.log('td rendered')`는 화면(콘솔 창)에 100번 나오지만 <br>
+실제로 렌더링은 `console.log('td rendered')`는 한 번만 나온다. <br>
+근거는 `console.log('getTdText')`가 한 번 나온다.
+
+
+### context-api 내용 정리
+<strong>context-api</strong>를 사용해보고, 최적화도 해봤다. <br>
+context-api를 사용하면서 Provider를 자식들에게 값을 전달하고 캐싱(useMemo)을 해줘야한다. <br>
+Provider를 전달할 값을 useContext로 바로 값을 받을 수 있다. <br>
+> 하지만, React.memo를 해줘야하고, useMemo를 해줘야 성능최적화를 꼭 해줘야한다. <br>
+
+--- 리액트 기본 강좌 끝 --- <br>
+수고하셨습니다 !!!!!!<br>

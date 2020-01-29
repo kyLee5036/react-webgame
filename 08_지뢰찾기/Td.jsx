@@ -1,4 +1,4 @@
-import React, {useContext, useCallback} from 'react';
+import React, {useContext, useCallback, memo, useMemo} from 'react';
 import { CODE, TableContext, OPEN_CELL, CLICK_MINE, FLAG_CELL, QUESTION_CELL, NORMALIZE_CELL } from './MineSearch';
 
 
@@ -32,6 +32,7 @@ const getTdStyle = (code) => {
 };
 
 const getTdText = (code) => {
+  console.log('getTdText');
   switch (code) {
     case CODE.NORMAL: // 기본적으로 빈 칸으로 한다.
       return '';
@@ -97,14 +98,23 @@ const Td = ({rowIndex, cellIndex}) => {
     }
   }, [tableData[rowIndex][cellIndex], halted]);
 
+  console.log('td rendered');
+
+  return useMemo(() => (
+    <RealTd onContextMenu={onRightClickTd} onClickTd={onClickTd} cell={tableData[rowIndex][cellIndex]} />
+  ), [tableData[rowIndex][cellIndex]]);
+  
+};
+
+const RealTd = memo(({ cell, onRightClickTd, onClickTd }) => {
+  console.log('rendered');
   return (
     <td
-      style={ getTdStyle(tableData[rowIndex][cellIndex]) }
       onClick={onClickTd}
+      style={getTdStyle(cell)}
       onContextMenu={onRightClickTd}
-    > { getTdText(tableData[rowIndex][cellIndex]) } </td> 
+    >{getTdText(cell)}</td>
   )
-  
-}
+});
 
 export default Td;

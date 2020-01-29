@@ -1,8 +1,8 @@
-import React, {useState, useCallback, useContext} from 'react';
+import React, {useState, useCallback, useContext, memo} from 'react';
 import {TableContext, START_GAME} from './MineSearch'
 
 // dispatch를 context-api를 통해서 가져오기
-const Form = () => {
+const Form = memo(() => {
   const [row, setRow] = useState(10); // 세로 - 줄
   const [cell, setCell] = useState(10); // 가로 -칸
   const [mine, setMine] = useState(10); // 지뢰
@@ -33,6 +33,6 @@ const Form = () => {
       <button onClick={onClickBtn}>시작</button>
     </div>
   );
-}
+});
 
 export default Form;
