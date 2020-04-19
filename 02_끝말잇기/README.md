@@ -186,3 +186,18 @@ useRef 를 통해 만든 객체 안의 current 값이 실제 엘리먼트를 가
 />
 
 ```
+
+### useRef랑 setTimeout같이 사용하는 방법
+
+```js
+const timeoutRef = useRef();
+
+useEffect(() => {
+  timeoutRef.current = setTimeout(function() {}, 초);
+  return () => {
+    clearTimeout(timeoutRef.current);
+  };
+}, []);
+
+// 이런 식으로 useEffect의 return에서 정리
+```
