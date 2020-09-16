@@ -56,6 +56,8 @@ module.exports = {}
 ```js
 const React = require('react');
 const ReactDom = require('react-dom');
+
+ReactDom.render(<App />, document.querySelector('#root'));
 ```
 
 #### index.html 파일 추가
@@ -72,12 +74,75 @@ const ReactDom = require('react-dom');
   <div id="root"></div>
   <!-- 웹팩 할 곳 설정해주기 -->
   <script src="./dist/app.js"></script>
+  <!-- 파일을 하나로 합쳐주기 위해서 웹팩을 설정해야한다. -->
 </body>
 </html>
 ```
 
 > js, jsx의 차이점?
 >> js는 자바스크립트 파일이지만, jsx는 리액트 파일이라서 리액트라는 것을 확실하게 인식해준다. <br>
+
+## 모듈 시스템과 웹팩 설정
+[위로 올라가기](#React에서-create-react-app-없이-만들어보기)
+
+#### client.jsx
+```js
+import React from 'react';
+import  ReactDom from 'react-dom';
+
+import App from './App';
+
+ReactDom.render(<App />, document.querySelector('#root'));
+```
+
+#### webpack.config.js 기본 설정
+```js
+module.exports = {
+  name: '', // 웹팩 설정 이름 (마음대로 지어도 상관없음)
+  mode: 'development', // 실제 서버시는: production, 개발용 : development
+  devtool: 'eval', // 빠르기 설정 (자세한 건 공식문서에 있음)
+
+  // entry과 output이 제일 중요하다.
+  entry: { // 입력하는 곳
+    
+  },
+
+  output: { // 출력하는 곳
+
+  },
+}
+```
+> 지금 우리의 목표가 app.js파일 하나를 만들어서 html이 실행할 수 있도록 해야한다. <br>
+> 그리고, client.jsx과 App.jsx 하나로 합쳐서 app.js로 만들어야한다. <br>
+>> 그러면 **입력(entry)** 은 `client.jsx`와 `App.jsx`이고, **출력(output)** 은 `./dist/app.js`이다. <br>
+
+#### webpack.config.js
+```js
+const path = require('path');
+
+module.exports = {
+  name: '',
+  mode: 'development',
+  devtool: 'eval',
+
+  // 확장자들을 입력안하고 여기에다가 확장자를 설정해줄 수가 있다.
+  resolve: { 
+    extensions: ['js', 'jsx'],
+  },
+  entry: {
+      app: [ // 여기에다가 배열로 설정해준다.
+      './client',
+    ]
+  },
+  output: {
+    path: path.join(__dirname, 'dist') 
+    // path.join는 경로를 알아준다. 
+    //__dirname는 현재 폴더 경로, -> 즉, 핸재 폴더에서 dist폴더를 가르킨다. (dist폴더도 생성해준다.)
+    filename: 'app.js', // 파일이름 설정
+  },
+}
+```
+
 
 
 webpack.config.js -> 웹팩 설정하는 곳
