@@ -35,16 +35,16 @@ react-webgame
 <pre><code>npm i react
 npm i react-dom</code></pre>
 
-+ **react@16.10.2** (가장 기본적인 리액트 설치)
-+ **react-dom@16.10.2** (웹에서 리액트를 사용하기 위해서 react-dom을 설치해준다)
++ **react@16.10.2** (가장 기본적인 리액트 설치) <br>
++ **react-dom@16.10.2** (웹에서 리액트를 사용하기 위해서 react-dom을 설치해준다) <br>
   
 
 #### webpack, webpack-cli 설치
 <pre><code>npm i -D webpack
 npm i -D webpack-cli </code></pre>
 
-+ **webpack-cli@3.3.9** (리액트에 할 떄 사용할 웹팩)
-+ **webpack@4.41.0** (리액트에 할 떄 사용할 웹팩)
++ **webpack-cli@3.3.9** (리액트에 할 떄 사용할 웹팩) <br>
++ **webpack@4.41.0** (리액트에 할 떄 사용할 웹팩) <br>
   
 
 #### webpack.config.js 파일 추가
@@ -79,7 +79,7 @@ ReactDom.render(<App />, document.querySelector('#root'));
 </html>
 ```
 
-> js, jsx의 차이점?
+> js, jsx의 차이점? <br>
 >> js는 자바스크립트 파일이지만, jsx는 리액트 파일이라서 리액트라는 것을 확실하게 인식해준다. <br>
 
 ## 모듈 시스템과 웹팩 설정
@@ -88,7 +88,7 @@ ReactDom.render(<App />, document.querySelector('#root'));
 #### client.jsx
 ```js
 import React from 'react';
-import  ReactDom from 'react-dom';
+import ReactDom from 'react-dom';
 
 import App from './App';
 
@@ -127,10 +127,10 @@ module.exports = {
 
   // 확장자들을 입력안하고 여기에다가 확장자를 설정해줄 수가 있다.
   resolve: { 
-    extensions: ['js', 'jsx'],
+      extensions: ['.js', '.jsx'],
   },
   entry: {
-      app: [ // 여기에다가 배열로 설정해준다.
+      app: [ // 여기에다가 배열로 설정해준다. 전에 있던, './client.jsx',에 jsx를 삭제해준다.
       './client',
     ]
   },
@@ -143,39 +143,69 @@ module.exports = {
 }
 ```
 
+## 웹팩으로 빌드하기
+[위로 올라가기](#React에서-create-react-app-없이-만들어보기)
 
+> 설정을 하고 난 후에는 Command-line에 `webpack`을 쳐준다. <br>
+> 하지만 에러가 날 것이다. <br>
+#### package.json
+```js
+// ...생략
+// ...생략
+  "main": "index.js",
+  "scripts": {
+    "dev": "webpack" // webpack을 적어줘야한다. 
+  },
+// ...생략
+// ...생략
+```
+> `npm run dev`로 실행해준다. 실행 결과는 실패일 것이다.
+>> ***바벨추가 해야한다. (바벨은 개발용에서만 사용한다)***
 
-webpack.config.js -> 웹팩 설정하는 곳
+<pre><code>npm i -D @babel/core @babel/preset-env @babel/preset-react babel-loader</code></pre>
 
-package.json에 보면...
++ **"@babel/core"**: 바벨 최신 문법으로 바꿔준다. <br>
++ **"@babel/preset-env"**: 브라우저에서 옛날 문법환경에 대해 알맞게 지원해준다. <br>
++ **"@babel/preset-react"**: jsx로 바꿔준다. <br>
++ **"babel-loader"**: 바벨이랑 웹 팩을 연결해준다. <br>
 
-+ "@babel/core": 바벨 최신 문법으로 바꿔준다.
-+ "@babel/preset-env": 환경에 맞게 알아서 바꿔준다.
-+ "@babel/preset-react": jsx로 바꿔준다.
-+ "babel-loader": 바벨이랑 웹 팩을 연결해준다.
-  
-npm i -dev @babel/preset-react -> 최신 문법을 옛날 문법으로 지원(많이 사용함)
+#### webpack.config.js에서 module 설정
+```js
+const path = require('path');
 
-npm i -dev babel-loader -> 바벨이랑 웹팩을 연결함(많이 사용함)<br /><br /><br />
-<hr/>
+module.exports = {
+  name: '',
+  mode: 'development',
+  devtool: 'eval',
+  resolve: {
+      extensions: ['.js', '.jsx'],
+  },
+  entry: {
+    app: ['./client']
+  },
 
-### 웹팩 실행 방법
-<pre><code>npm run dev</code></pre>
-대신에 dev를 webpack설정( package.json에서 설정 )
-<pre><code>"scripts": {
-    "dev": "webpack"
-},</code></pre>
-<br />
-이하처럼 설정한 후 바벨을 실행하면( webpack.config.js에서 설정 ) 
-<pre><code>output : {
-    path:path.join(__dirname, 'dist'),
+  // 모듈은 여기 중간에 설정한다.
+  module: {
+    rules: [{ // 여러가지 규칙을 하기위해서 배열로 해준다.
+      test: /\.jsx?/, // js파일, jsx파일을 룰을 정의한다. (정규표현식이라 따로 공부할 것)
+      loader: 'babel-loader', // js파일, jsx파일을 babel-loader로 연결해서 최신문법, 옛날문법을 적용할 것이다 (option에 설정한다.).
+      
+      // 베벨의 옵션을 여기에다가 넣어준다.
+      options: {
+        presets: [ // presets에다가 방금 전 install했는 preset-env랑 preset-react를 넣어준다.
+          '@babel/preset-env', '@babel/preset-react'
+        ]
+      },
+    }],
+  },
+
+  output: {
+    path: path.join(__dirname, 'dist'),
     filename: 'app.js',
-},</code></pre>
-
-dist파일이 생기고, dist파일 안에 app.js가 있다. 
-(app.js의 내용물이 에러가 생겨도 app.js의 파일이 생긴다. )
-<br /><br /><br />
-
+  },
+}
+```
+> `npm run dev`를 실행하면 웹팩실행이 정상적으로 돌아가는 것을 확인할 수 있다. <br>
 
 <hr/>
 
