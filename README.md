@@ -1,13 +1,18 @@
 react-webgame
 =============
 
+# React에서 create react app 없이 만들어보기
+[위로 올라가기](#React에서-create-react-app-없이-만들어보기)
 
+## 웹팩 설치하기
+[위로 올라가기](#React에서-create-react-app-없이-만들어보기)
 
-package.json, package-lock.json 추가하는 법
--------------
+> 웹팩 설치하기전에는 노드를 알아야한다. 근데, 노드는 서버가 아니라 노드의 의미는 자바스크립트 실행기이다. <br>
+> 리액트를 하기 위해서는 자바스크립트의 실행기를 알아야한다. <br>
 
+### npm init 실행하기
 <pre><code>1. npm init 를 작성
-1. package name: (현재 폴더명) "폴더명 지정         
+1. package name: (현재 폴더명) "폴더명 지정
    (webpack_pratice)"
 2. version: (1.0.0) 
 3. description: "설명"
@@ -15,53 +20,65 @@ package.json, package-lock.json 추가하는 법
 5. test command:
 6. git repository:
 7. keywords:
-8.  author: KYLEE "저자 이름"
-9.  license: (ISC) MIT 또는 ISC
-</code></pre>
-### package.json, package-lock.json 추가가 된다.
-<br /><br /><br />
-<hr/>
+8. author: KYLEE "저자 이름"
+9. license: (ISC) MIT 또는 ISC</code></pre>
 
-## (dependencies, devDependencies 의 차이점)
+> package.json, package-lock.json 추가가 된다.
 
-dependencies - 실제 서비스에서 쓰이는 것
+### package.json에서의 dependencies, devDependencies의 차이점
 
-devDependencies - 개발에서만 쓰이는 것 ('-D'의미는 개발자용)
-<br /><br /><br />
-<hr/>
+> **dependencies** - 실제 서비스에서 쓰이는 것 <br>
+> **devDependencies** - 개발에서만 쓰이는 것 ('-D'의미는 개발자용) <br>
 
-리액트 mpm추가
--------------
 
+#### react, react-dom 설치
 <pre><code>npm i react
-npm i react-dom
-</code></pre>
+npm i react-dom</code></pre>
 
-(npm i react react-dom 해도 상관없음)
-+ react@16.10.2
-+ react-dom@16.10.2
++ **react@16.10.2** (가장 기본적인 리액트 설치)
++ **react-dom@16.10.2** (웹에서 리액트를 사용하기 위해서 react-dom을 설치해준다)
   
-package.json -> dependencies -> react, react-dom 추가되어 있다.
-<br /><br /><br />
-<hr/>
 
-webpack 초기설정
--------------
-
+#### webpack, webpack-cli 설치
 <pre><code>npm i -D webpack
 npm i -D webpack-cli </code></pre>
 
-(npm i -D webpack webpack-cli 해도 상관없음)
-+ webpack-cli@3.3.9
-+ webpack@4.41.0
++ **webpack-cli@3.3.9** (리액트에 할 떄 사용할 웹팩)
++ **webpack@4.41.0** (리액트에 할 떄 사용할 웹팩)
   
-package.json -> devDependencies -> webpack, webpack-cli 추가되어 있다.
-<br /><br /><br />
-<hr/>
 
-## webpack.config.js 를 추가
+#### webpack.config.js 파일 추가
+```js
+module.exports = {}
+```
 
-##### (jsx는 react파일이라는 것을 알려주는 것임, js랑 다르다)
+#### client.jsx 파일 추가
+```js
+const React = require('react');
+const ReactDom = require('react-dom');
+```
+
+#### index.html 파일 추가
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <!-- root를 추가해주기 (경로설정) -->
+  <div id="root"></div>
+  <!-- 웹팩 할 곳 설정해주기 -->
+  <script src="./dist/app.js"></script>
+</body>
+</html>
+```
+
+> js, jsx의 차이점?
+>> js는 자바스크립트 파일이지만, jsx는 리액트 파일이라서 리액트라는 것을 확실하게 인식해준다. <br>
+
 
 webpack.config.js -> 웹팩 설정하는 곳
 
