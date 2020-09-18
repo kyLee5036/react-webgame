@@ -250,3 +250,4 @@ Reactdom.render(<Hot />, document.querySelector('#root'));
 + 커맨드가 안 될경우에는 : npm i -g webpack-dev-server
 + Error: Cannot find module 'webpack' : npm link webpack
 
+ 
