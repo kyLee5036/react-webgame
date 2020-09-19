@@ -6,6 +6,7 @@ react-webgame
 - [모듈 시스템과 웹팩 설정](#모듈-시스템과-웹팩-설정)
 - [웹팩으로 빌드하기](#웹팩으로-빌드하기)
 - [@babel/preset-env와 plugins](#@babel/preset-env와-plugins)
+- [webpack-dev-server와 hot-loader](#webpack-dev-server와-hot-loader)
 
 
 
@@ -274,9 +275,10 @@ module.exports = {
 > 웹팩을 공부하는 팁 중에서는 `plugins`나 `rules`를 최대한 많이 빼보면서 알아보는게 좋은 편이다. <br>
 >> ***mode, entry, module, plugins, output*** 을 할 수있으면 90%는 이해를 한다. <br>
 
-<hr/>
 
-## 서버 설정 (react-hot-loader, webpack-dev-server)
+
+## webpack-dev-server와 hot-loader
+[위로 올라가기](#React에서-create-react-app-없이-만들어보기)
 
 <pre><code>npm i -D react-hot-loader
 npm i -D webpack-dev-server</code></pre>
@@ -284,37 +286,79 @@ npm i -D webpack-dev-server</code></pre>
 + react-hot-loader@4.12.15
 + webpack-dev-server@3.8.2
 
-package.json -> devDependencies -> react-hot-loader, webpack-dev-server 추가되어 있다.
+> **webpack-dev-server**가 webpack.config.js를 읽어서 빌드해줘서 항상 서버로 유지를 시켜준다..
 
-#### package.json 에서 설정
-```bash
+> 두개를 추가적으로 install를 해줄 것이다. <br>
+
+#### package.json
+```js
 "scripts": {
-    "dev": "webpack-dev-server --hot"
-}, 
+  "dev": "webpack-dev-server --hot" // dev를 이와 같이 설정해준다.
+},
 ```
-#### client.jsx에서 설정
-```javascript
-const { hot } = require('react-hot-loader'); 
-const WordRelay = require('./WordRelay');
-const Hot = hot(WordRelay);
-Reactdom.render(<Hot />, document.querySelector('#root'));
+
+#### client.jsx
+```js
+import React from 'react';
+import ReactDom from 'react-dom';
+import { hot } from 'react-hot-loader/root'; // 추가를 해준다
+// 뒤에 root를 꼭 넣어줘야한다. 
+
+import App from './App';
+const Hot = hot(App);
+
+ReactDom.render(<Hot />, document.querySelector('#root'));
 ```
-#### webpack.config.js에서 설정
-```bash
-"plugins": [
-    'react-hot-loader/babel' 
-],
+
+#### webpack.config.js
+```js
+const path = require('path');
+
+module.exports = {
+  ....생략
+  module: {
+    rules: [{
+      test: /\.jsx?/,
+      loader: 'babel-loader',
+      options: {
+        presets: ['@babel/preset-env', '@babel/preset-react'],
+        plugins: ['react-hot-loader/babel'] // 이 부분을 추가도 해줘야한다. 
+      },
+    }],
+  },
+  ....생략
+}
 ```
-#### index.html에서 설정 (dist폴더를 삭제해준다.)
+
+#### index.html
 ```html
-<script src="./app.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEST</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="./dist/app.js"></script>
+</body>
+</html>
 ```
 
+#### webpack.config.js
+```js
+const path = require('path');
 
-## 이하 내용수정중..
+module.exports = {
+  // ...생략
+  // ...생략
+  output: {
+    path : path.join(__dirname, 'dist'),
+    filename: 'app.js',
+    publicPath: '/dist/', // 여기에서 경로를 설정을 해줘야한다.
+  },
+}
+```
 
-### error 처리
-+ 커맨드가 안 될경우에는 : npm i -g webpack-dev-server
-+ Error: Cannot find module 'webpack' : npm link webpack
-
- 
+> 참고로) **webpack.config.js를 수정하면 npm run dev를 다시 실행해줘야한다.**
