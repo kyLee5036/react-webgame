@@ -1,6 +1,15 @@
 react-webgame
 =============
 
+- [React에서 create react app 없이 만들어보기](#React에서-create-react-app-없이-만들어보기)
+- [웹팩 설치하기](#웹팩-설치하기)
+- [모듈 시스템과 웹팩 설정](#모듈-시스템과-웹팩-설정)
+- [웹팩으로 빌드하기](#웹팩으로-빌드하기)
+- [@babel/preset-env와 plugins](#@babel/preset-env와-plugins)
+
+
+
+
 # React에서 create react app 없이 만들어보기
 [위로 올라가기](#React에서-create-react-app-없이-만들어보기)
 
@@ -206,6 +215,64 @@ module.exports = {
 }
 ```
 > `npm run dev`를 실행하면 웹팩실행이 정상적으로 돌아가는 것을 확인할 수 있다. <br>
+
+## @babel/preset-env와 plugins
+[위로 올라가기](#React에서-create-react-app-없이-만들어보기)
+
+#### webpack.config.js
+```js
+const path = require('path');
+const webpack = require('webpack');
+
+module.exports = {
+  name: 'twitter-clone-coding-webpack-setting',
+  mode: 'development',
+  devtool: 'eval',
+  resolve: {
+    extensions: ['.js', '.jsx'],
+  },
+  entry: {
+    app: './client',
+  },
+  module: {
+    rules: [{
+      test: /\.jsx?/,
+      loader: 'babel-loader',
+      options: { // babel-loader의 옵션
+        // presets: ['@babel/preset-env', '@babel/preset-react'], // 수정 전 (기본 형)
+        // 하지만, babel-loader옵션이 여러 개 있는 것처럼, @babel/preset-env에도 설정이 여러개 있다. 그래서 여기에서 @babel/preset-env에서 설정하는 방법을 한다.
+        presets: [
+          ['@babel/preset-env', { // 첫번 째 인자에 [이름], 두번 째 인자에 [옵션]을 설정한다.
+            targets: {
+              browsers: ['last 2 chrome version'], // 이런식으로 설정을 할 수 있다.
+            }
+          }], 
+          '@babel/preset-react'
+        ],
+        plugins: [],
+      },
+    }],
+  },
+
+  // 또한, 여기에도 plugins가 있다. 확장프로그램이라고 생각하면 된다.
+  // 즉, 추가적으로 작업을 뭔가하고 싶으면 여기에다가 추가를 해준다.
+  plugins: [
+    // 예로 들면
+    new webpack.LoaderOptionsPlugin({ debug: true,})
+  ],
+
+  output: {
+    path: path.join(__dirname, 'dist'),
+    filename: 'app.js',
+  },
+}
+```
+
+> `babel-loader`에 옵션이 `@babel/preset-env`, `@babel/preset-react`을 설정해주는 듯이 <br>
+> `@babel/preset-env`에서도 옵션을 설정할 수가 있다. <br>
+
+> 웹팩을 공부하는 팁 중에서는 `plugins`나 `rules`를 최대한 많이 빼보면서 알아보는게 좋은 편이다. <br>
+>> ***mode, entry, module, plugins, output*** 을 할 수있으면 90%는 이해를 한다. <br>
 
 <hr/>
 
